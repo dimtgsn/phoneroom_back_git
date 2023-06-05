@@ -7,6 +7,7 @@ use App\Http\Requests\MainImage\StoreRequest;
 use App\Http\Requests\MainImage\UpdateRequest;
 use App\Models\MainImage;
 use App\Services\MainImage\Service;
+use mysql_xdevapi\Table;
 
 class MainImageController  extends Controller
 {
@@ -37,6 +38,12 @@ class MainImageController  extends Controller
     public function update(UpdateRequest $request, Service $service){
         $data = $request->validated();
         $service->update($data);
+        return redirect()->route('admin.main_images.index');
+    }
+
+    public function destroy(MainImage $main_image){
+        \Storage::disk('public')->delete(substr($main_image->path, 8));
+        $main_image->delete();
         return redirect()->route('admin.main_images.index');
     }
 }

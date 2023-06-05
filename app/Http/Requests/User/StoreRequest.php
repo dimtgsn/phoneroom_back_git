@@ -18,7 +18,7 @@ class StoreRequest extends FormRequest
             'middle_name' => 'string|nullable|max:255|injection',
             'last_name' => 'string|nullable|max:255|injection',
             'phone' => 'string|phone|required|injection',
-            'email' => 'string|email|unique:users|nullable|max:255|injection',
+            'email' => 'string|email|nullable|max:255|injection',
             'password' => 'nullable|string|min:8|confirmed|injection',
             'fullAddress' => 'string|nullable|injection',
 //            'street' => 'string|nullable|max:255',

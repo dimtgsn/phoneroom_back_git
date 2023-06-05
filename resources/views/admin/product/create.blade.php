@@ -6,7 +6,7 @@
     <section class="h-100">
         <div class="container-fluid h-100">
             <div class="row justify-content-md-left w-100 h-100">
-                <div class="card-wrapper col-8">
+                <div class="card-wrapper col-10">
                     <div class="">
                         <div class="card card-danger">
                             <div class="card-header">
@@ -322,7 +322,6 @@
                                         <span>*Мой склад</span>
                                         <select name="vat" class="custom-select form-control-border"
                                                 aria-label="vat" id="vat">
-                                            <option value="null"></option>
                                             <option value="-1">без НДС</option>
                                             <option value="0">0%</option>
                                             <option value="10">10%</option>
@@ -384,7 +383,7 @@
         for (let i = 0; i < button_remove.length; i++) {
             button_remove[i].addEventListener('click', remove_clon, false)
         }
-        
+
         function add_properties(properties) {
             let select = document.querySelector('#category_id');
             let value = select.value;

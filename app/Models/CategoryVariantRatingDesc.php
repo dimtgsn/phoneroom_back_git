@@ -117,4 +117,5 @@ class CategoryVariantRatingDesc extends Model
 //            'filter' => 'options_values IN [128ГБ, 256ГБ, 512ГБ]'
 //        ]);
     }
+
 }

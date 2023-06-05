@@ -24,6 +24,7 @@ class UserController extends Controller
     public function update(UpdateRequest $request, \App\Services\Profile\Service $service, User $user){
         $data = $request->validated();
         $data['phone'] = preg_replace('/\D/','', $data['phone']);
+        $data['phone'][0] = '7';
         $profile = Profile::find($user->profile->id);
         $service->update($data, $profile, $user);
         return new UserResource($user);
@@ -38,11 +39,21 @@ class UserController extends Controller
         return $sms->send($request->phone, str('Ваш код подтверждения - '.$pass), 'SMS Aero');
     }
 
-    public function register(StoreRequest $request, Service $service){
+    public function register(StoreRequest $request, Service $service, \App\Services\Profile\Service $service_profile){
         $data = $request->validated();
         $data['phone'] = preg_replace('/\D/','', $data['phone']);
-        $user = $service->storeClient($data);
-//        $request->session()->regenerate();
+        $data['phone'][0] = '7';
+        $user = User::where('phone', $data['phone'])->first();
+        if ($user && isset($data['last_name'])){
+            $profile = Profile::find($user->profile->id);
+            $service_profile->update($data, $profile, $user);
+        }
+        elseif ($user){
+            abort(404);
+        }
+        else{
+            $user = $service->storeClient($data);
+        }
         $token = $user->createToken($data['phone']);
         return [
             'data' => [

@@ -4,6 +4,7 @@ namespace App\Services\Product;
 
 use App\Models\Category;
 use App\Models\CategoryProduct;
+use App\Models\CategoryVariantRatingDesc;
 use App\Models\Color;
 use App\Models\Enter;
 use App\Models\Image;
@@ -227,6 +228,10 @@ class Service
                     'image' => $data['image'],
                 ]);
 
+                $product->update([
+                    'sku' => trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
+                ]);
+
                 $category = Category::where('id', $product->category_id)->first();
                 foreach ($variants as $i => $variant){
                     $variant['id'] = str($product->id).'00'.str($i+1);
@@ -252,13 +257,11 @@ class Service
 
                 }
 
-
                 if (isset($data['tags_id'])){
                     $tags = $data['tags_id'];
                     unset($data['tags_id']);
                     $product->tags()->attach($tags);
                 }
-
 
                 if (empty($data_properties) !== true){
                     $properties = [];
@@ -339,7 +342,6 @@ class Service
         });
     }
 
-
     public function update($data, $product)
     {
         $data_thumb_img = [];
@@ -350,52 +352,68 @@ class Service
             $data_properties = $data['properties'];
         }
         $imageConvert = new ImageConvertToWebp();
-        if(empty($data['image']) !== true){
-            $data['image'] = 'storage/'.\Storage::disk('public')->put('images/products', $data['image']);
-            if ($product->image){
-                Storage::disk('public')->delete(substr($product->image, 8));
+        $myWarehouse = MyWarehouse::select('token')->first();
+        DB::transaction(function() use ($data, $data_thumb_img, $product, $data_properties, $imageConvert, $translation, $myWarehouse) {
 
+            if(empty($data['image']) !== true){
+                $data['image'] = 'storage/'.\Storage::disk('public')->put('images/products', $data['image']);
+                if ($product->image){
+                    Storage::disk('public')->delete(substr($product->image, 8));
+                }
+                if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
+                    || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
+                    $data['image'] = $imageConvert->convert($data['image'], true);
+                }
             }
-            if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
-                || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
-                $data['image'] = $imageConvert->convert($data['image'], true);
-            }
-        }
-        for ($i=1; $i<=4; $i++){
-            if (empty($data['path_'.$i]) !== true){
-                $data['path_'.$i] = 'storage/'.\Storage::disk('public')->put('images/thumbimg', $data['path_'.$i]);
-                if ($product->images){
-                    foreach ($product->images as $img){
-                        if ($img->path){
-                            Storage::disk('public')->delete(substr($img->path, 8));
+            for ($i=1; $i<=4; $i++){
+                if (empty($data['path_'.$i]) !== true || (isset($data['del_path_'.$i]) && $data['del_path_'.$i] !== null)){
+                    if (count($product->images) !== 0){
+                        foreach ($product->images as $img){
+                            if ($img->position === $i){
+                                Storage::disk('public')->delete(substr($img->path, 8));
+                            }
+                        }
+                    }
+                    if (empty($data['path_'.$i]) !== true){
+                        $data['path_'.$i] = 'storage/'.\Storage::disk('public')->put('images/thumbimg', $data['path_'.$i]);
+                        if(str_ends_with($data['path_'.$i], "jpg") || str_ends_with($data['path_'.$i], "png")
+                            || str_ends_with($data['path_'.$i], "gif") || str_ends_with($data['path_'.$i], "jpeg")){
+                            $data['path_'.$i] = $imageConvert->convert($data['path_'.$i], true);
+                        }
+                    }
+                    if (isset($data['del_path_'.$i]) && $data['del_path_'.$i] !== null && isset($data['path_'.$i]) === false){
+                        $image = Image::where('product_id', $product->id)
+                            ->where('position', $i)->first();
+                        if($image){
+                            $image->delete();
+                            foreach ($product->images as $img){
+                                if ($img->position > $i){
+                                    Image::where('product_id', $product->id)
+                                        ->where('position', $img->position)->update([
+                                            'position' => $img->position - 1,
+                                        ]);
+                                }
+                            }
                         }
                     }
                 }
-                if(str_ends_with($data['path_'.$i], "jpg") || str_ends_with($data['path_'.$i], "png")
-                    || str_ends_with($data['path_'.$i], "gif") || str_ends_with($data['path_'.$i], "jpeg")){
-                    $data['path_'.$i] = $imageConvert->convert($data['path_'.$i], true);
-                }
             }
-        }
-        $myWarehouse = MyWarehouse::select('token')->first();
-        DB::transaction(function() use ($data, $data_thumb_img, $product, $data_properties, $translation, $myWarehouse) {
-
             for ($i=1; $i<=4; $i++){
                 if (isset($data['path_'.$i])){
                     $data_thumb_img[$i] = $data['path_'.$i];
                     unset($data['path_'.$i]);
                 }
             }
-
             if (isset($data['options'])){
-
+                $variants = [];
+                $category = Category::where('id', $product->category_id)->first();
+//                if($product->option === null || json_decode($product->option->options_json, true) !== $data['options']){
                 $options_json = json_encode($data['options'], JSON_UNESCAPED_UNICODE);
                 for ($i=0;$i<count($data['options']);$i++){
                     if (isset($data['options'][$i]['values']['colors'])){
                         unset($data['options'][$i]['values']['colors']);
                     }
                 }
-                $variants = [];
                 $num = 0;
                 foreach ($data['options'][0]['values'] as $opt1){
                     if (count($data['options']) > 1){
@@ -533,6 +551,14 @@ class Service
                     }
                 }
 
+                if (isset($product->variants)){
+                    $variants_edit = Variant::where('product_id', $product->id)->get();
+
+                    for ($l=0;$l<count($variants_edit);$l++){
+                        $variants_edit[$l]->delete();
+                    }
+                }
+
                 $product->update([
                     'name' => $data['name'] ?? $product->name,
                     'image' => $data['image'] ?? $product->image,
@@ -547,14 +573,102 @@ class Service
                     'rating' => $data['rating'] ?? $product->rating,
                     'category_id' => $data['category_id'] ?? $product->category_id,
                     'brand_id' => $data['brand_id'] ?? $product->brand_id,
-                    'published' => $data['published'] ?? $product->published
+//                    'published' => $data['published'] ?? $product->published
+                    'published' => false,
                 ]);
 
                 $product->update([
                     'sku' => trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
                 ]);
 
-                $category = Category::where('id', $product->category_id)->first();
+//                if ($product->option && json_decode($product->option->options_json, true) === $data['options']){
+//                    foreach ($product->variants as $variant) {
+//                        $variants[] = json_decode($variant->variants_json, true);
+//                    }
+//                }
+
+                foreach ($variants as $i => $variant){
+                    $variant['id'] = str($product->id).'00'.str($i+1);
+                    $variant['brand'] = $product->brand->name;
+                    $variant['category'] = $product->category->name;
+                    $variant['slug'] = $variant['slug'] ?? str($translation->translate($product->slug.' '.$variant['name']))->slug();
+                    $variant['sku'] = trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
+
+                    if($product->option === null){
+                        $variant['image'] = $product->image;
+                        foreach ($product->images as $img){
+                            Image::firstOrCreate([
+                                'product_id' => $product->id,
+                                'path' => $img->path,
+                                'position' => $img->position,
+                                'variant_id' => $variant['id'],
+                            ]);
+                            $img->delete();
+                        }
+
+//                        $product_variants = Variant::firstOrCreate([
+//                            'product_id' => $product->id,
+//                            'variants_json' => json_encode($variant, JSON_UNESCAPED_UNICODE),
+//                        ]);
+                    }
+                    else{
+                        if(isset($data['image'])){
+                            $variant['image'] = $data['image'];
+                        }
+                        else{
+                            foreach ($product->variants as $var){
+                                if (json_decode($var->variants_json, true)['name'] === $variant['name']){
+                                    $variant['image'] = json_decode($var->variants_json, true)['image'];
+                                }
+                            }
+                            foreach ($product->variants as $var){
+                                if (!isset($variant['image'])){
+                                    $variant['image'] = $product->image;
+                                }
+                            }
+                        }
+
+                        if (empty($data_thumb_img) !== true){
+                            for ($i=1; $i<=count($data_thumb_img); $i++){
+                                $image = Image::where('product_id', $product->id)
+                                    ->where('position', $i)->where('variant_id', $variant['id'])->first();
+                                if($image){
+                                    $image->update([
+                                        'path' => $data_thumb_img[$i],
+                                    ]);
+                                }
+                                else{
+                                    Image::firstOrCreate([
+                                        'product_id' => $product->id,
+                                        'path' => $data_thumb_img[$i],
+                                        'position' => $i,
+                                        'variant_id' => $variant['id'],
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+
+                    $product_variants = Variant::firstOrCreate([
+                        'product_id' => $product->id,
+                        'variants_json' => json_encode($variant, JSON_UNESCAPED_UNICODE),
+                    ]);
+                    $variants[$i] = $variant;
+//
+//                    if (count($product->images) !== 0 && $product->option === null){
+//                        foreach ($product->images as $img){
+//                            Image::firstOrCreate([
+//                                'product_id' => $product->id,
+//                                'path' => $img->path,
+//                                'position' => $img->position,
+//                                'variant_id' => $variant['id'],
+//                            ]);
+//                            $img->delete();
+//                        }
+//                    }
+//
+//                    $category->variants()->sync($product_variants->id);
+                }
                 if (isset($product->option)){
                     Option::where('product_id', $product->id)->first()->update([
                         'options_json' => $options_json,
@@ -570,71 +684,16 @@ class Service
                     ]);
                     $category->options()->sync($option->id);
                 }
-//                if($product->exported === true){
-//                    foreach ($product->variants as $i => $variants_old) {
-//                        $enter = Enter::where('product_id', $product->id)
-//                            ->where('variant_id', json_decode($variants_old->variants_json, JSON_UNESCAPED_UNICODE)['id'])->first();
-//                        $res_enter = Http::withToken($myWarehouse->token)
-//                            ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/' . $enter->enter_id);
-//                        $enter->delete();
-//                        $variant_meta[]['meta'] = [
-//                            "href" => "https://online.moysklad.ru/api/remap/1.2/entity/variant/" . json_decode($variants_old->variants_json, JSON_UNESCAPED_UNICODE)['my_warehouse_id'],
-//                            "type" => "variant",
-//                            "mediaType" => "application/json",
-//                        ];
-//                    }
-//                    $res = Http::withToken($myWarehouse->token)
-//                        ->withHeaders([
-//                            "Content-Type" => "application/json"
-//                        ])
-//                        ->post('https://online.moysklad.ru/api/remap/1.2/entity/variant/delete', [
-//                            $variant_meta
-//                        ]);
-//                }
-                if (isset($product->variants)){
-                    $variants_edit = Variant::where('product_id', $product->id)->get();
-
-                    for ($l=0;$l<count($variants_edit);$l++){
-                        $variants_edit[$l]->delete();
-                    }
-                }
-                foreach ($variants as $i => $variant){
-                    $variant['id'] = str($product->id).'00'.str($i+1);
-                    $variant['brand'] = $product->brand->name;
-                    $variant['category'] = $product->category->name;
-                    $variant['slug'] = $variant['slug'] ?? str($translation->translate($product->slug.' '.$variant['name']))->slug();
-                    $variant['sku'] = trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
-                    foreach ($product->variants as $var){
-                        if (json_decode($var->variants_json, true)['name'] === $variant['name']){
-                            $variant['image'] = json_decode($var->variants_json, true)['image'];
-                        }
-                    }
-                    if (empty($data_thumb_img) !== true){
-                        if ($product->images){
-                            foreach ($product->images as $img){
-                                $img->delete();
-                            }
-                        }
-                    }
-                    $product_variants = Variant::firstOrCreate([
-                        'product_id' => $product->id,
-                        'variants_json' => json_encode($variant, JSON_UNESCAPED_UNICODE),
-                    ]);
-                    $variants[$i] = $variant;
-
-                    if (empty($data_thumb_img) !== true){
-                        for ($i=1; $i<=count($data_thumb_img); $i++){
-                            Image::firstOrCreate([
-                                'product_id' => $product->id,
-                                'path' => $data_thumb_img[$i],
-                                'position' => $i,
-                                'variant_id' => $variant['id'],
-                            ]);
-                        }
-                    }
-                    $category->variants()->sync($product_variants->id);
-                }
                 $variants_edit = Variant::where('product_id', $product->id)->get();
+
+                if ($product->option !== null){
+                    $variants = Variant::all();
+                    foreach ($variants as $var) {
+                        if($var->product_id === $product->id){
+                            $category->variants()->attach($var->id);
+                        }
+                    }
+                }
             }
             else{
                 $product->update([
@@ -688,13 +747,22 @@ class Service
                     if (count($product->images) !== 0){
                         if (empty($data_thumb_img) !== true){
                             foreach ($data_thumb_img as $key => $val) {
-                                Image::where('product_id', $product->id)
-                                    ->where('position', $key)
-                                    ->update([
+                                $image = Image::where('product_id', $product->id)
+                                    ->where('position', $key)->first();
+                                if($image){
+                                    $image->update([
                                         'product_id' => $product->id,
                                         'path' => $val,
                                         'position' => $key,
                                     ]);
+                                }
+                                else{
+                                    Image::firstOrCreate([
+                                        'product_id' => $product->id,
+                                        'path' => $val,
+                                        'position' => $key
+                                    ]);
+                                }
                             }
                         }
                     }
@@ -950,6 +1018,8 @@ class Service
 
         $data_thumb_img = [];
         $data_properties = [];
+        $var_img = null;
+        $var_id = 0;
         foreach ($product->variants as $variants){
             if (json_decode($variants->variants_json, true)['slug'] === $variant_slug){
                 $var_img = json_decode($variants->variants_json, true)['image'];
@@ -960,43 +1030,83 @@ class Service
             $data_properties = $data['properties'];
         }
         $imageConvert = new ImageConvertToWebp();
-        if(empty($data['image']) !== true){
-            $data['image'] = 'storage/'.\Storage::disk('public')->put('images/products', $data['image']);
-            if ($var_img){
-                Storage::disk('public')->delete(substr($var_img, 8));
-            }
-            if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
-                || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
-                $data['image'] = $imageConvert->convert($data['image'], true);
-            }
-        }
-        for ($i=1; $i<=4; $i++){
-            if (empty($data['path_'.$i]) !== true){
-                $data['path_'.$i] = 'storage/'.\Storage::disk('public')->put('images/thumbimg', $data['path_'.$i]);
-                if ($product->images){
-                    foreach ($product->images as $img){
-                        if ((int)$img->variant_id === (int)$var_id){
-                            Storage::disk('public')->delete(substr($img->path, 8));
-                        }
-                    }
-                }
-                if(str_ends_with($data['path_'.$i], "jpg") || str_ends_with($data['path_'.$i], "png")
-                    || str_ends_with($data['path_'.$i], "gif") || str_ends_with($data['path_'.$i], "jpeg")){
-                    $data['path_'.$i] = $imageConvert->convert($data['path_'.$i], true);
-                }
-            }
-        }
+
         $myWarehouse = MyWarehouse::select('token')->first();
 
-        DB::transaction(function() use ($data, $data_thumb_img, $variant_slug, $product, $data_properties, $translation, $myWarehouse) {
+        DB::transaction(function() use ($data, $data_thumb_img, $variant_slug, $product, $var_img, $var_id, $data_properties, $imageConvert, $translation, $myWarehouse) {
+
+            if(empty($data['image']) !== true){
+                $data['image'] = 'storage/'.\Storage::disk('public')->put('images/products', $data['image']);
+                if ($var_img){
+                    $flag = false;
+                    foreach ($product->variants as $variants){
+                        if (json_decode($variants->variants_json, true)['image'] === $var_img &&
+                            json_decode($variants->variants_json, true)['id'] !== $var_id){
+                            $flag = true;
+                            break;
+                        }
+                    }
+                    if (!$flag){
+                        Storage::disk('public')->delete(substr($var_img, 8));
+                    }
+                }
+                if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
+                    || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
+                    $data['image'] = $imageConvert->convert($data['image'], true);
+                }
+            }
+            for ($i=1; $i<=4; $i++){
+                if (empty($data['path_'.$i]) !== true || (isset($data['del_path_'.$i]) && $data['del_path_'.$i] !== null)){
+                    $flag = false;
+                    if (empty($data['path_'.$i]) !== true){
+                        $data['path_'.$i] = 'storage/'.\Storage::disk('public')->put('images/thumbimg', $data['path_'.$i]);
+                        if(str_ends_with($data['path_'.$i], "jpg") || str_ends_with($data['path_'.$i], "png")
+                            || str_ends_with($data['path_'.$i], "gif") || str_ends_with($data['path_'.$i], "jpeg")){
+                            $data['path_'.$i] = $imageConvert->convert($data['path_'.$i], true);
+                        }
+                    }
+                    if ($product->images){
+                        foreach ($product->images as $img){
+                            if ((int)$img->variant_id === (int)$var_id && $img->position === $i){
+                                foreach ($product->images as $image){
+                                    if ($img->path === $image->path && (int)$image->variant_id !== (int)$var_id){
+                                        $flag = true;
+                                        break;
+                                    }
+                                }
+                                if (!$flag){
+                                    Storage::disk('public')->delete(substr($img->path, 8));
+                                }
+                            }
+                        }
+                    }
+                    if (isset($data['del_path_'.$i]) && $data['del_path_'.$i] !== null && isset($data['path_'.$i]) === false){
+                        $image = Image::where('product_id', $product->id)
+                            ->where('position', $i)->where('variant_id', (int)$var_id)->first();
+                        if($image){
+                            $image->delete();
+                            foreach ($product->images as $img){
+                                if ($img->position > $i && (int)$img->variant_id === (int)$var_id){
+                                    Image::where('product_id', $product->id)
+                                        ->where('position', $img->position)->where('variant_id', (int)$var_id)->update([
+                                            'position' => $img->position - 1,
+                                        ]);
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+
             for ($i=1; $i<=4; $i++){
                 if (isset($data['path_'.$i])){
                     $data_thumb_img[$i] = $data['path_'.$i];
                     unset($data['path_'.$i]);
                 }
-                else{
-                    $data_thumb_img[$i] = '';
-                }
+//                else{
+//                    $data_thumb_img[$i] = '';
+//                }
             }
 
             $variants = [];
@@ -1042,7 +1152,7 @@ class Service
                                             ->where('position', $key)
                                             ->where('variant_id', $variant['id'])
                                             ->first();
-                                        if ($img !== null){
+                                        if ($img){
                                             $img->update([
                                                     'product_id' => $product->id,
                                                     'path' => $val,
@@ -1144,4 +1254,5 @@ class Service
             }
         });
     }
+
 }

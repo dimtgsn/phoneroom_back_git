@@ -47,5 +47,6 @@ class StoreRequest extends FormRequest
             'path_3' => 'nullable|file|injection',
             'path_4' => 'nullable|file|injection',
         ];
+
     }
 }

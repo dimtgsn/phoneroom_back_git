@@ -14,7 +14,7 @@
 
 
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{{ route('admin.orders.index') }}" class="{{ Request::is('*/orders*') ? 'active' : '' }} nav-link">
                 <i class="nav-icon fa fa-duotone fa-money-bill"></i>
                 <p>
                     Заказы

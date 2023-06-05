@@ -18,11 +18,14 @@ class Service
                     || str_ends_with($data['paths'][$i], "gif") || str_ends_with($data['paths'][$i], "jpeg")){
                     $data['paths'][$i] = $imageConvert->convert('storage/'.$data['paths'][$i], true);
                 }
+                else{
+                    $data['paths'][$i] = 'storage/'.$data['paths'][$i];
+                }
             }
             foreach ($data['paths'] as $path){
                 $positionLast = MainImage::count();
                 MainImage::firstOrCreate([
-                    'path' => 'storage/'.$path,
+                    'path' => $path,
                     'position' => $positionLast + 1 ,
                 ]);
             }
@@ -41,6 +44,9 @@ class Service
                         || str_ends_with($data['paths'][$i], "gif") || str_ends_with($data['paths'][$i], "jpeg")){
                         $data['paths'][$i] = $imageConvert->convert('storage/'.$data['paths'][$i], true);
                     }
+                    else{
+                        $data['paths'][$i] = 'storage/'.$data['paths'][$i];
+                    }
                 }
             }
             foreach ($data['positions'] as $id => $position){
@@ -52,7 +58,7 @@ class Service
                 foreach ($data['paths'] as $id => $path){
                     Storage::disk('public')->delete(substr(MainImage::where('id', $id)->select('path')->first()['path'], 8));
                     MainImage::where('id', $id)->update([
-                        'path' => 'storage/'.$path,
+                        'path' => $path,
                     ]);
                 }
             }

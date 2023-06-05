@@ -5,7 +5,7 @@
     <section class="h-100">
         <div class="container-fluid h-100">
             <div class="row justify-content-md-left w-100 h-100">
-                <div class="card-wrapper col-8">
+                <div class="card-wrapper col-10">
                     <div class="">
                         <div class="card card-danger">
                             <div class="card-header">
@@ -78,19 +78,30 @@
                                         <label class="form-label">Дополнительные изображения</label>
                                         <br>
                                         @for($i=1; $i<=4; $i++)
-                                            <label class="form-label">Позиция {{ $i }}</label>
-                                            <div class="input-group mb-3">
-                                                <div class="custom-file">
-                                                    <label for="path_{{$i}}" class="custom-file-label">Выберите файл</label>
-                                                    <input type="file" name="path_{{$i}}" class="custom-file-input" id="path_{{$i}}">
-                                                    @error("path")
-                                                    <span class="invalid-feedback" role="alert">
+                                            <div>
+                                                <label class="form-label">Позиция {{ $i }}</label>
+                                                @if(isset($product->images[($i-1)]->path) && count($product->variants) === 0 && count($product->images) !== 0)
+                                                    <div class="remove_thumbimg d-inline-block btn btn-danger mb-1 ml-1">-</div>
+                                                @endif
+                                                <div class="input-group mb-3">
+                                                    <div class="custom-file">
+                                                        @if(count($product->variants) === 0 && count($product->images) !== 0)
+                                                            <label for="path_{{$i}}" class="custom-file-label">{{$product->images[($i-1)]->path ?? ''}}</label>
+                                                            <input style="cursor: pointer" value="{{ $product->images[($i-1)]->path ?? '' }}" type="file" name="path_{{$i}}" class="custom-file-input" id="path_{{$i}}">
+                                                            <input style="display: none" value="" type="text" name="del_path_{{$i}}" class="del-file-input" id="del_path_{{$i}}">
+                                                        @else
+                                                            <label for="path_{{$i}}" class="custom-file-label">Выберите файл</label>
+                                                            <input style="cursor: pointer" type="file" name="path_{{$i}}" class="custom-file-input" id="path_{{$i}}">
+                                                        @endif
+                                                        @error("path")
+                                                        <span class="invalid-feedback" role="alert">
                                                          <strong>{{ $message }}</strong>
                                                     </span>
-                                                    @enderror
-                                                </div>
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text">Загрузка</span>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text">Загрузка</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endfor
@@ -351,7 +362,7 @@
                                             <label for="properties[]" class="form-label d-inline-block mr-2">Характеристики</label>
                                             <div class="add_property d-inline-block btn btn-secondary">+</div>
                                             <div class="btn ml-2 btn-outline-secondary add_main_title">Добавить загаловок</div>
-                                            @if($product->property !== null and $product->property->properties_json != false)
+                                            @if($product->property !== null and $product->property->properties_json !== '[]')
                                                 @if(is_array($product->property->properties_json))
                                                     @foreach($product->property->properties_json as $property => $val)
                                                         <div class="properties mt-3">
@@ -653,6 +664,21 @@
 
         for (let i = 0; i < color_option.length; i++) {
             color_option[i].addEventListener('click', toggle_color, false)
+        }
+
+        const rm_thumb_img_btn = document.querySelectorAll('.remove_thumbimg');
+
+        let rm_thumb_img = ({target}) => {
+            let file_input = target.parentElement.querySelector('.custom-file-input');
+            let del_input = target.parentElement.querySelector('.del-file-input');
+            let file_label = target.parentElement.querySelector('.custom-file-label');
+            file_input.value = '';
+            del_input.value = 'del';
+            file_label.innerHTML = '';
+        }
+
+        for (let i = 0; i < rm_thumb_img_btn.length; i++) {
+            rm_thumb_img_btn[i].addEventListener('click', rm_thumb_img, false)
         }
     </script>
 @endsection

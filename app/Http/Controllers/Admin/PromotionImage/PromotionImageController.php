@@ -39,4 +39,10 @@ class PromotionImageController  extends Controller
         $service->update($data);
         return redirect()->route('admin.promotion_images.index');
     }
+
+    public function destroy(PromotionImage $promotion_image){
+        \Storage::disk('public')->delete(substr($promotion_image->path, 8));
+        $promotion_image->delete();
+        return redirect()->route('admin.promotion_images.index');
+    }
 }

@@ -53,6 +53,12 @@ Route::group(['middleware'=>['auth:sanctum', 'json',]], function (){
         Route::get('/category/{user}', 'CompareController@category')->name('api.compares.category');
         Route::delete('/{user}', 'CompareController@destroy')->name('api.compares.destroy');
     });
+
+//    Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
+////    Route::get('/', 'CategoryController@index')->name('api.categories.index');
+//        Route::post('/create', 'OrderController@create')->name('api.orders.create');
+////    Route::post('/', 'UserController@index')->name('api.users.index');
+//    });
 });
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\Product', 'prefix' => 'products'], function (){
@@ -75,9 +81,19 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\Category', 'prefix' => '
     Route::get('/category/{id}', 'CategoryController@subCategories')->name('api.categories.subCategories');
 });
 
-//Route::group(['namespace' => '\App\Http\Controllers\Api\User', 'prefix' => 'users'], function (){
-////    Route::get('/', 'CategoryController@index')->name('api.categories.index');
-//    Route::post('/registration', 'UserController@store')->name('api.users.store');
+Route::group(['namespace' => '\App\Http\Controllers\Api\MainImage', 'prefix' => 'main_images'], function (){
+    Route::get('/', 'MainImageController@index')->name('api.main_images.index');
+});
+Route::group(['namespace' => '\App\Http\Controllers\Api\BannerImage', 'prefix' => 'banner_images'], function (){
+    Route::get('/', 'BannerImageController@index')->name('api.banner_images.index');
+});
+Route::group(['namespace' => '\App\Http\Controllers\Api\PromotionImage', 'prefix' => 'promotion_images'], function (){
+    Route::get('/', 'PromotionImageController@index')->name('api.promotion_images.index');
+});
+//перекинуть в только для авторизированных пользователей
+Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
+//    Route::get('/', 'CategoryController@index')->name('api.categories.index');
+    Route::post('/create', 'OrderController@create')->name('api.orders.create');
+    Route::get('/zip_check', 'OrderController@zip_check')->name('api.orders.zip_check');
 //    Route::post('/', 'UserController@index')->name('api.users.index');
-//});
-
+});

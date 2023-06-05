@@ -46,6 +46,10 @@ class UpdateRequest extends FormRequest
             'path_2' => 'nullable|file|injection',
             'path_3' => 'nullable|file|injection',
             'path_4' => 'nullable|file|injection',
+            'del_path_1' => 'nullable|injection',
+            'del_path_2' => 'nullable|injection',
+            'del_path_3' => 'nullable|injection',
+            'del_path_4' => 'nullable|injection',
         ];
     }
 }

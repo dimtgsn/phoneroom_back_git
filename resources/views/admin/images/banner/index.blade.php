@@ -30,12 +30,22 @@
                                 @foreach($images as $img)
                                     @if($img->position === 1)
                                         <div class="carousel-item active">
+                                            <form class="m-0 p-0 d-inline-block" style="position: relative; z-index: 12;" action="{{ route('admin.banner_images.destroy', $img->id) }}" method="post">
+                                                @csrf
+                                                @method('delete')
+                                                <button class="btn" type="submit"><i class="fa fa-solid fa-trash"></i></button>
+                                            </form>
                                             <img class="d-block w-100"
                                                  src="{{ asset($img->path) }}"
                                                  alt="Image slide">
                                         </div>
                                     @else
                                         <div class="carousel-item">
+                                            <form class="m-0 p-0 d-inline-block" style="position: relative; z-index: 12;" action="{{ route('admin.banner_images.destroy', $img->id) }}" method="post">
+                                                @csrf
+                                                @method('delete')
+                                                <button class="btn" type="submit"><i class="fa fa-solid fa-trash"></i></button>
+                                            </form>
                                             <img class="d-block w-100"
                                                  src="{{ asset($img->path) }}"
                                                  alt="Image slide">

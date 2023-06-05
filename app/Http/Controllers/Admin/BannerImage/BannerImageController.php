@@ -39,4 +39,10 @@ class BannerImageController  extends Controller
         $service->update($data);
         return redirect()->route('admin.banner_images.index');
     }
+
+    public function destroy(BannerImage $banner_image){
+        \Storage::disk('public')->delete(substr($banner_image->path, 8));
+        $banner_image->delete();
+        return redirect()->route('admin.banner_images.index');
+    }
 }

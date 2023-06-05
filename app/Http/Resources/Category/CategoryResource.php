@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Category;
 
-use App\Http\Resources\Brand\BrandResource;
+use App\Http\Resources\Brand\MainImageResource;
 use App\Models\Brand;
 use Illuminate\Http\Resources\Json\JsonResource;
 

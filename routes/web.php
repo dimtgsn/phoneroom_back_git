@@ -101,6 +101,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
         Route::post('/', 'MainImageController@store')->name('admin.main_images.store');
         Route::get('/edit', 'MainImageController@edit')->name('admin.main_images.edit');
         Route::patch('/update', 'MainImageController@update')->name('admin.main_images.update');
+        Route::delete('/{main_image:id}', 'MainImageController@destroy')->name('admin.main_images.destroy');
     });
     Route::group(['namespace' => '\App\Http\Controllers\Admin\BannerImage', 'prefix' => 'images/banner'], function (){
         Route::get('/', 'BannerImageController@index')->name('admin.banner_images.index');
@@ -108,6 +109,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
         Route::post('/', 'BannerImageController@store')->name('admin.banner_images.store');
         Route::get('/edit', 'BannerImageController@edit')->name('admin.banner_images.edit');
         Route::patch('/update', 'BannerImageController@update')->name('admin.banner_images.update');
+        Route::delete('/{banner_image:id}', 'BannerImageController@destroy')->name('admin.banner_images.destroy');
     });
     Route::group(['namespace' => '\App\Http\Controllers\Admin\PromotionImage', 'prefix' => 'images/promotion'], function (){
         Route::get('/', 'PromotionImageController@index')->name('admin.promotion_images.index');
@@ -115,6 +117,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
         Route::post('/', 'PromotionImageController@store')->name('admin.promotion_images.store');
         Route::get('/edit', 'PromotionImageController@edit')->name('admin.promotion_images.edit');
         Route::patch('/update', 'PromotionImageController@update')->name('admin.promotion_images.update');
+        Route::delete('/{promotion_image:id}', 'PromotionImageController@destroy')->name('admin.promotion_images.destroy');
     });
     Route::group(['namespace' => '\App\Http\Controllers\Admin\Logo', 'prefix' => 'logo'], function (){
         Route::get('/edit', 'LogoController@edit')->name('admin.logo.edit');
@@ -128,6 +131,12 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
         Route::post('/export', 'MyWarehouseController@export')->name('admin.my-warehouse.export');
         Route::post('/webhook', 'MyWarehouseController@webhook')->name('admin.my-warehouse.webhook');
         Route::patch('/{myWarehouse}', 'MyWarehouseController@update')->name('admin.my-warehouse.update');
+    });
+
+    Route::group(['namespace' => '\App\Http\Controllers\Admin\Order', 'prefix' => 'orders'], function (){
+        Route::get('/', 'OrderController@index')->name('admin.orders.index');
+        Route::get('/{order}/chose_delivery', 'OrderController@choose_delivery')->name('admin.orders.choose_delivery');
+        Route::post('/{order}/parsel_create/{delivery_id}', 'OrderController@parsel_create')->name('admin.orders.parsel_create');
     });
 });
 
