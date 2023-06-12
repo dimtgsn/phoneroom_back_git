@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Listeners\UpdateSearchIndexes;
 use App\Models\Category;
 use App\Observers\CategoryObserver;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -19,6 +21,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        Logout::class => [
+            UpdateSearchIndexes::class,
         ],
     ];
 

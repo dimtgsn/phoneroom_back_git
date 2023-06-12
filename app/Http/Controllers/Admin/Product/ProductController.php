@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin\Product;
 
 use App\Console\Commands\DeleteIndexCommand;
-use App\Console\Commands\ImportAndUpdateIndexCommand;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\StoreRequest;
 use App\Http\Requests\Product\UpdateRequest;
@@ -16,13 +15,13 @@ use App\Models\MyWarehouse;
 use App\Models\Option;
 use App\Models\Product;
 use App\Models\Property;
-use App\Models\PropertyValue;
 use App\Models\Tag;
 use App\Models\Variant;
 use App\Services\Product\Service;
 use App\Utilities\ImageConvertToWebp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -97,10 +96,10 @@ class ProductController extends Controller
         $data = $request->validated();
         $data['published'] = isset($data['published']) ? (bool)$data['published']:false;
         $service->update($data, $product);
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantRatingDesc"
-        ]);
-        $this->import_and_update_indexes();
+//        Artisan::call(ImportAndUpdateIndexCommand::class, [
+//            'model' => "App\Models\CategoryVariantRatingDesc"
+//        ]);
+//        $this->import_and_update_indexes();
         return redirect()->route('admin.products.index');
     }
 
@@ -111,7 +110,7 @@ class ProductController extends Controller
 
         $service->variant_update($data, $product, $variant_slug);
 
-        $this->import_and_update_indexes();
+//        $this->import_and_update_indexes();
         return redirect()->route('admin.products.index');
     }
 
@@ -153,7 +152,7 @@ class ProductController extends Controller
 
         $product->delete();
         $this->delete_data_indexes();
-        $this->import_and_update_indexes();
+//        $this->import_and_update_indexes();
         return redirect()->route('admin.products.index');
     }
 
@@ -241,7 +240,7 @@ class ProductController extends Controller
             }
         }
         $this->delete_data_indexes();
-        $this->import_and_update_indexes();
+//        $this->import_and_update_indexes();
         return redirect()->route('admin.products.index');
     }
 
@@ -257,22 +256,6 @@ class ProductController extends Controller
             'model' => "App\Models\CategoryVariantCreatedAtDesc"
         ]);
         Artisan::call(DeleteIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantPriceAsc"
-        ]);
-    }
-
-    public function import_and_update_indexes()
-    {
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantRatingDesc"
-        ]);
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantPriceDesc"
-        ]);
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantCreatedAtDesc"
-        ]);
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
             'model' => "App\Models\CategoryVariantPriceAsc"
         ]);
     }
