@@ -60,7 +60,7 @@
                                         <label for="image" class="form-label">Изображение</label>
                                         <div class="input-group">
                                             <div class="custom-file">
-                                                <label for="image" class="custom-file-label">Выберите файл</label>
+                                                <label for="image" class="custom-file-label">{{ $product['image'] }}</label>
                                                 <input value="{{ $product->image }}" type="file" name="image" class="custom-file-input" id="image">
 
                                                 @error("image")

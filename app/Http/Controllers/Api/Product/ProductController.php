@@ -73,12 +73,21 @@ class ProductController extends Controller
             }
         }
         else{
-            if (empty($product['tags']) != true){
+            if (empty($product->tags) != true){
                 $tags = [];
-                foreach ($product['tags'] as $tag){
-                    $tags[] = $tag->image;
+                foreach ($product->tags as $tag){
+                    $tags[] = array($tag->image, $tag->name);
                 }
                 $product['tags'] = $tags;
+            }
+            if (empty($product->images) != true){
+                $images[] = [
+                    'path' => $product->image,
+                ];
+                foreach ($product->images as $img){
+                    $images[] = ['path' => $img->path];
+                }
+                $product['images'] = $images;
             }
             return new ProductResource($product);
         }

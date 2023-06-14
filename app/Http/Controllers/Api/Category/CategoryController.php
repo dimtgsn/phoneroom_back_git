@@ -38,28 +38,58 @@ class CategoryController extends Controller
         ];
         $min_price = 9999999;
         $max_price = -1;
+        $subCategories = \DB::table('categories')->where('parent_id', $category->id)->get();
 
-        for($i=0;$i<count($category->products);$i++){
-            if (count($category->products[$i]->variants)){
-                $category->products[$i] = json_decode($category->products[$i]->variants, true);
-                for($j=0;$j<count($category->products[$i]);$j++) {
-                    if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] < $min_price) {
-                        $min_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
-                    }
-                    if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] >= $max_price) {
-                        $max_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+        if ($category->parent_id !== null){
+            for($i=0;$i<count($category->products);$i++){
+                if (count($category->products[$i]->variants)){
+                    $category->products[$i] = json_decode($category->products[$i]->variants, true);
+                    for($j=0;$j<count($category->products[$i]);$j++) {
+                        if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] < $min_price) {
+                            $min_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                        }
+                        if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] >= $max_price) {
+                            $max_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                        }
                     }
                 }
-            }
-            else{
-                 if ($category->products[$i]['price'] < $min_price) {
-                     $min_price = $category->products[$i]['price'];
-                 }
-                if ($category->products[$i]['price'] >= $max_price) {
-                    $max_price = $category->products[$i]['price'];
+                else{
+                    if ($category->products[$i]['price'] < $min_price) {
+                        $min_price = $category->products[$i]['price'];
+                    }
+                    if ($category->products[$i]['price'] >= $max_price) {
+                        $max_price = $category->products[$i]['price'];
+                    }
                 }
             }
         }
+        else{
+            foreach ($subCategories as $subCategory){
+                $category = Category::where('id', $subCategory->id)->first();
+                for($i=0;$i<count($category->products);$i++){
+                    if (count($category->products[$i]->variants)){
+                        $category->products[$i] = json_decode($category->products[$i]->variants, true);
+                        for($j=0;$j<count($category->products[$i]);$j++) {
+                            if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] < $min_price) {
+                                $min_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                            }
+                            if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] >= $max_price) {
+                                $max_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                            }
+                        }
+                    }
+                    else{
+                        if ($category->products[$i]['price'] < $min_price) {
+                            $min_price = $category->products[$i]['price'];
+                        }
+                        if ($category->products[$i]['price'] >= $max_price) {
+                            $max_price = $category->products[$i]['price'];
+                        }
+                    }
+                }
+            }
+        }
+
         $category_section += [
             'max_price' => (int)$max_price,
             'min_price' => (int)$min_price,

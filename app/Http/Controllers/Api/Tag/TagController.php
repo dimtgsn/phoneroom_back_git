@@ -21,10 +21,9 @@ class TagController extends Controller
         ];
         $product_or_variants = [];
         for($i=0;$i<count($tag->products);$i++){
-            if (isset($tag->products[$i]->variants)){
+            if (count($tag->products[$i]->variants)){
                 $category = $tag->products[$i]->category;
                 foreach ($tag->products[$i]->variants as $j => $variant){
-//                    $tag->products[$i] = json_decode($variant->variants_json, true);
                     $product_or_variants[$j] = [
                         'id' => json_decode($variant->variants_json, true)['id'],
                         'product_name' => json_decode($variant->variants_json, true)['product_name'],
@@ -42,32 +41,16 @@ class TagController extends Controller
                         'properties' => json_decode($tag->products[$i]->property->properties_json, true),
                     ];
                 }
-//                $tag->products[$i] = json_decode($tag->products[$i]->variants, true);
-//                for($j=0;$j<count($tag->products[$i]);$j++){
-//                    $product_or_variants[$j] = [
-//                        'id' => $tag->products[$i][$j]['id'],
-//                        'product_name' => $tag->products[$i][$j]['product_name'],
-//                        'slug' => $tag->products[$i][$j]['slug'],
-//                        'image' => $tag->products[$i][$j]['image'],
-//                        'price' => $tag->products[$i][$j]['price'],
-//                        'category_name' => $category->name,
-//                        'category_slug' => $category->slug,
-//                        'old_price' => $tag->products[$i][$j]['old_price'],
-//                        'rating' => $tag->products[$i][$j]['rating'],
-//                        'units_in_stock' => $tag->products[$i][$j]['units_in_stock'],
-//                        'published' => $tag->products[$i][$j]['published'],
-//                    ];
-//
-//                }
             }
             else{
-                $product_or_variants = [
+                $product_or_variants[] = [
                    'id' => $tag->products[$i]->id,
                    'product_name' => $tag->products[$i]->name,
                    'slug' => $tag->products[$i]->slug,
                    'image' => $tag->products[$i]->image,
                    'price' => $tag->products[$i]->price,
                    'quantity' => 1,
+                   'published' => $tag->products[$i]->published,
                    'category_name' => $tag->products[$i]->category->name,
                    'category_slug' => $tag->products[$i]->category->slug,
                    'category_id' => $category->id,

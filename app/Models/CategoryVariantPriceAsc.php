@@ -45,6 +45,14 @@ class CategoryVariantPriceAsc extends Model
                 });
                 foreach ($category_variants_json as $variant_price_asc){
                     $option = json_decode($variant_price_asc, true)['options'];
+
+                    $variant_price_asc = json_decode($variant_price_asc, true);
+                    unset($variant_price_asc['min_price']);
+                    unset($variant_price_asc['min_balance']);
+                    unset($variant_price_asc['purchase_price']);
+                    unset($variant_price_asc['country']);
+                    $variant_price_asc['quantity'] = 1;
+
                     $options['name'] = [];
                     $options['value'] = [];
                     foreach ($option as $name => $val){
@@ -54,20 +62,20 @@ class CategoryVariantPriceAsc extends Model
                         $options['value'] += array($translation->translate($name) => $val);
                     }
                     $client->index('category_variant_price_asc')->updateDocuments([
-                        'id' => json_decode($variant_price_asc, true)['id'],
+                        'id' => $variant_price_asc['id'],
                         'category_slug' => $category->slug,
-                        'in_stock' => json_decode($variant_price_asc, true)['units_in_stock'] != 0,
-                        'with_old_price' => json_decode($variant_price_asc, true)['old_price'] != null,
+                        'in_stock' => $variant_price_asc['units_in_stock'] != 0,
+                        'with_old_price' => $variant_price_asc['old_price'] != null,
                         'category_parent_slug' => $parentCategory->slug,
                         'category_name' => $category->name,
-                        'product' => json_decode($variant_price_asc, true),
-                        'created_at' => json_decode($variant_price_asc, true)['created_at'],
-                        'rating' => json_decode($variant_price_asc, true)['rating'],
+                        'product' => $variant_price_asc,
+                        'created_at' => $variant_price_asc['created_at'],
+                        'rating' => $variant_price_asc['rating'],
                         'tags' => $tags,
                         'options_names' => $options['name'],
                         'options_values' => $options['value'],
-                        'price' => (int)json_decode($variant_price_asc, true)['price'],
-                        'brand' => json_decode($variant_price_asc, true)['brand'],
+                        'price' => (int)$variant_price_asc['price'],
+                        'brand' => $variant_price_asc['brand'],
                     ]);
                 }
             }
@@ -78,28 +86,41 @@ class CategoryVariantPriceAsc extends Model
                 });
 
                 foreach ($category_products as $product_price_asc){
-//                    if (!in_array($product_price_asc['id'], $category_variants_product_id)){
-                        $client->index('category_variant_price_asc')->updateDocuments([
-                            'id' => $product_price_asc['id'],
-                            'category_slug' => $category->slug,
-                            'in_stock' => $product_price_asc['units_in_stock'] != 0,
-                            'with_old_price' => $product_price_asc['old_price'] != null,
-                            'category_parent_slug' => $parentCategory->slug,
-                            'category_name' => $product_price_asc['category'],
-                            'product' => $product_price_asc,
-                            'created_at' => $product_price_asc['created_at'],
-                            'rating' => $product_price_asc['rating'],
-                            'tags' => $tags,
-                            'price' => (int)$product_price_asc['price'],
-                            'brand' => $product_price_asc['brand'],
-                        ]);
-//                    }
+                    unset($product_price_asc['min_price']);
+                    unset($product_price_asc['min_balance']);
+                    unset($product_price_asc['purchase_price']);
+                    unset($product_price_asc['vat']);
+                    unset($product_price_asc['my_warehouse_id']);
+                    unset($product_price_asc['images']);
+                    unset($product_price_asc['tags']);
+                    unset($product_price_asc['variants']);
+                    unset($product_price_asc['baskets']);
+                    unset($product_price_asc['country']);
+                    unset($product_price_asc['enter']);
+                    unset($product_price_asc['property']);
+                    unset($product_price_asc['exported']);
+                    unset($product_price_asc['category_id']);
+                    unset($product_price_asc['brand_id']);
+                    $product_price_asc['category'] = $product_price_asc['category']['name'];
+                    $product_price_asc['brand'] = $product_price_asc['brand']['name'];
+                    $product_price_asc['quantity'] = 1;
+                    $client->index('category_variant_price_asc')->updateDocuments([
+                        'id' => $product_price_asc['id'],
+                        'category_slug' => $category->slug,
+                        'in_stock' => $product_price_asc['units_in_stock'] != 0,
+                        'with_old_price' => $product_price_asc['old_price'] != null,
+                        'category_parent_slug' => $parentCategory->slug,
+                        'category_name' => $product_price_asc['category'],
+                        'product' => $product_price_asc,
+                        'created_at' => $product_price_asc['created_at'],
+                        'rating' => $product_price_asc['rating'],
+                        'tags' => $tags,
+                        'price' => (int)$product_price_asc['price'],
+                        'brand' => $product_price_asc['brand'],
+                    ]);
                 }
             }
         }
-
-//            $category_variants_product_id =  json_decode($category->load('variants')->variants->pluck('product_id'), true);
-
 
         $client->index('category_variant_price_asc')->updateFilterableAttributes([
             'brand',
