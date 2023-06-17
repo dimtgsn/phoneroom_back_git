@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::defaultView('vendor.pagination.bootstrap-4');
 
-        Model::shouldBeStrict(!app()->isProduction());
+//        Model::shouldBeStrict(!app()->isProduction());
 
         if (app()->isProduction()){
             DB::whenQueryingForLongerThan(CarbonInterval::seconds(5), function (Connection $connection, QueryExecuted $event) {

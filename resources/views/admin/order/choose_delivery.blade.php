@@ -20,7 +20,7 @@
                                     <div class="d-flex flex-wrap">
                                         @foreach($products as $product)
                                             <div class="card-body w-25">
-                                                <img class="w-50 mb-1" src="{{ asset($product['product']['image']) }}" alt="Product image">
+                                                <img class="w-25 mb-1" src="{{ asset($product['product']['image']) }}" alt="Product image">
                                                 <h2 class="text-sm d-inline-block mb-1">Товар - <strong>{{ $product['product']['name'] }}</strong></h2>
                                                 <br>
                                                 <h3 class="text-sm d-inline-block">Количество - {{ $product['quantity'] }}</h3>

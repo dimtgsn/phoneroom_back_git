@@ -59,23 +59,22 @@ class OrderController  extends Controller
                 }
             }
         }
-//        dd($products);
         return view('admin.order.index', compact('orders', 'products'));
     }
 
-    public function choose_delivery(Order $order){
+    public function choose_delivery(Order $order, \App\Services\Order\Service $service){
 
-        $data = $this->get_order_products($order);
+        $data = $service->get_order_products($order, false);
         $products = $data['products'];
-        $products_weight = $data['products_weight'];
+//        $products_weight = $data['products_weight'];
         $delivery = '';
 //        $delivery = $this->get_delivery_costs($order, $products_weight, 1);
         return view('admin.order.choose_delivery', compact('order', 'products', 'delivery'));
     }
 
-    public function parsel_create(Order $order, $delivery_id){
+    public function parsel_create(Order $order, \App\Services\Order\Service $service, $delivery_id){
         $customer = User::where('id', $order->user_id)->first();
-        $products = $this->get_order_products($order)['products'];
+        $products = $service->get_order_products($order)['products'];
         $token = env('BOXBERRY_TOKEN', '');
         if ($delivery_id == 1){
             /*
@@ -164,55 +163,5 @@ class OrderController  extends Controller
             return '';
         }
         return '';
-    }
-
-    public function get_order_products(Order $order)
-    {
-        $products = [];
-        $products_weight = 0;
-        $order_product = \DB::table("order_products")->where('order_id', $order->id)->select('product_id', 'order_id', 'quantity', 'price', 'created_at')->get();
-        foreach ($order_product as $op) {
-            if (Product::where('id', $op->product_id)->first()){
-                $products_weight += (int)preg_replace("/[^0-9]/", '', json_decode(Product::where('id', $op->product_id)->first()->property->properties_json, true)["Вес"]["Вес"]
-                    ?? json_decode(Product::where('id', $op->product_id)->first()->property->properties_json, true)["Вес"]);
-                $products[] = [
-                    'product' => [
-                        'id' => Product::where('id', $op->product_id)->first()->id,
-                        'name' => Product::where('id', $op->product_id)->first()->name,
-                        'image' => Product::where('id', $op->product_id)->first()->image,
-                    ],
-                    'quantity' => $op->quantity,
-                    'price' => $op->price,
-                    'vat' => Product::where('id', $op->product_id)->first()->vat,
-                    'weight' => (int)preg_replace("/[^0-9]/", '', json_decode(Product::where('id', $op->product_id)->first()->property->properties_json, true)["Вес"]["Вес"]
-                        ?? json_decode(Product::where('id', $op->product_id)->first()->property->properties_json, true)["Вес"]),
-                ];
-            }
-            else{
-                foreach (Variant::all() as $variants){
-                    if ((int)json_decode($variants->variants_json, true)['id'] === $op->product_id){
-                        $products_weight += (int)preg_replace("/[^0-9]/", '', json_decode(Product::where('id', $variants->product_id)->first()->property->properties_json, true)["Вес"]["Вес"]
-                            ?? json_decode(Product::where('id', $variants->product_id)->first()->property->properties_json, true)["Вес"]);
-                        $products[] = [
-                            'product' => [
-                                'id' => json_decode($variants->variants_json, true)['id'],
-                                'name' => json_decode($variants->variants_json, true)['product_name'],
-                                'image' => json_decode($variants->variants_json, true)['image'],
-                            ],
-                            'quantity' => $op->quantity,
-                            'price' => $op->price,
-                            'vat' => Product::where('id', $variants->product_id)->first()->vat,
-                            'weight' => (int)preg_replace("/[^0-9]/", '', json_decode(Product::where('id', $variants->product_id)->first()->property->properties_json, true)["Вес"]["Вес"]
-                                ?? json_decode(Product::where('id', $variants->product_id)->first()->property->properties_json, true)["Вес"]),
-                        ];
-                    }
-                }
-            }
-        }
-
-        return [
-            'products' => $products,
-            'products_weight' => $products_weight,
-        ];
     }
 }

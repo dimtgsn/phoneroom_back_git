@@ -35,7 +35,6 @@ class Service
     public function update($data)
     {
         $imageConvert = new ImageConvertToWebp();
-
         \DB::transaction(function() use ($data, $imageConvert) {
             if (isset($data['paths'])){
                 foreach ($data['paths'] as $i => $path){

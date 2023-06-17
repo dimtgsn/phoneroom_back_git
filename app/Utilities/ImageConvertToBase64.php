@@ -15,7 +15,7 @@ class ImageConvertToBase64
         $path = pathinfo($file);
         $ext = mb_strtolower($path['extension']);
 
-        if (in_array($ext, array('jpeg', 'jpg', 'gif', 'png', 'webp', 'svg'))) {
+        if (in_array($ext, array('jpeg', 'jpg', 'gif', 'png', 'webp', 'svg', 'avif'))) {
             $img = base64_encode(file_get_contents($file));
         }
         return $img;
