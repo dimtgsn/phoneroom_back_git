@@ -13,7 +13,7 @@ class Service
         $user->update([
             'first_name' => $data['first_name'] ?? $user->fist_name,
             'email' => $data['email'] ?? $user->email,
-//            'phone' => $data['phone'] ?? $user->phone,
+            'phone' => $data['phone'] ?? $user->phone,
         ]);
         $profile->update([
             'middle_name' => $data['middle_name'] ?? $profile->middle_name,

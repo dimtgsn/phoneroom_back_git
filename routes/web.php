@@ -13,9 +13,13 @@ Route::get('/login', function () {
 })->name('login');
 Auth::routes();
 
-//Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+// TODO add register
+Route::group(['namespace' => '\App\Http\Controllers\Api\User', 'prefix' => 'users'], function (){
+    Route::post('/login', 'UserController@login');
+    Route::post('/register', 'UserController@register');
+    Route::post('/logout', 'UserController@logout')->middleware("auth:sanctum");
+});
 
-//
 Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin', 'middleware' => 'admin'], function (){
 
     Route::get('/', IndexController::class)->name('admin.index');

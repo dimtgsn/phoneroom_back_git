@@ -14,24 +14,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-
-});
-
+// TODO delete login, register
 Route::group(['namespace' => '\App\Http\Controllers\Api\User', 'prefix' => 'users'], function (){
     Route::post('/phone_auth', 'UserController@phone_auth')->name('api.users.phone_auth');
-    Route::post('/register', 'UserController@register')->name('api.users.register');
-    Route::post('/login/{user:phone}', 'UserController@login')->name('api.users.login');
     Route::get('/userIpInfo', 'UserController@getIpInfo')->name('api.users.getIpInfo');
-
 });
-Route::group(['middleware'=>['auth:sanctum', 'json',]], function (){
+
+Route::group(['middleware'=>['auth:sanctum', 'json']], function (){
 
     Route::group(['namespace' => '\App\Http\Controllers\Api\User', 'prefix' => 'users'], function (){
         Route::get('/user/{user}', 'UserController@index')->name('api.users.index');
         Route::post('/{user}', 'UserController@update')->name('api.users.update');
-        Route::get('/logout/{user}', 'UserController@logout')->name('api.users.logout');
     });
     Route::group(['namespace' => '\App\Http\Controllers\Api\Message', 'prefix' => 'messages'], function (){
         Route::post('/{user}/create', 'MessageController@create')->name('api.messages.create');
@@ -63,6 +56,7 @@ Route::group(['middleware'=>['auth:sanctum', 'json',]], function (){
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\Product', 'prefix' => 'products'], function (){
     Route::get('/', 'ProductController@index')->name('api.products.index');
+    Route::get('/products', 'ProductController@products')->name('api.products.products');
     Route::get('/{slug}', 'ProductController@show')->name('api.products.show');
 });
 
@@ -90,7 +84,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\BannerImage', 'prefix' =
 Route::group(['namespace' => '\App\Http\Controllers\Api\PromotionImage', 'prefix' => 'promotion_images'], function (){
     Route::get('/', 'PromotionImageController@index')->name('api.promotion_images.index');
 });
-//перекинуть в только для авторизированных пользователей
+// TODO перекинуть в только для авторизированных пользователей
 Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
 //    Route::get('/', 'CategoryController@index')->name('api.categories.index');
     Route::post('/create', 'OrderController@create')->name('api.orders.create');

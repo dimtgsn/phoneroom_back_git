@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Compare\GetRequest;
 use App\Http\Requests\Compare\StoreRequest;
 use App\Http\Requests\Compare\UpdateRequest;
+use App\Http\Resources\Product\MiniProductCollection;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Compare\Service;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CompareController extends Controller
 {
@@ -91,17 +94,39 @@ class CompareController extends Controller
             $service->create($user);
         }
         $data = $request->validated();
-
-//        $category = Category::select('id')->where('name', $data['category_id'])->first();
-//
-//        $data['category_id'] = $category->id;
         return $service->update($data, $user);
     }
 
     public function destroy(UpdateRequest $request, Service $service, User $user){
         $data = $request->validated();
-//        $category = Category::select('id')->where('name', $data['category_id'])->first();
-//        $data['category_id'] = $category->id;
         return $service->destroy($data, $user);
+    }
+
+    public function products(Request $request){
+        $data = $request->validate([
+            'products' => ['required']
+        ]);
+        if (!count(json_decode($data['products'], true))){
+            return [];
+        }
+        $products = [];
+        foreach (json_decode($data['products'], true) as $product) {
+            $_product = Product::where('id', (int)$product)->first();
+            if ($_product){
+                $products[] = $_product->toArray();
+            }
+            else{
+                $variant = DB::select("
+                        select variants_json->>0 as data
+                        from variants
+                        where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
+                );
+                $products[] = json_decode($variant[0]->data, true);
+            }
+        }
+        if (count($products)){
+            return new MiniProductCollection($products);
+        }
+        return [];
     }
 }

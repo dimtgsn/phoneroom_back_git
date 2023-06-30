@@ -13,27 +13,32 @@
 
                     <div class="card fat">
                         <div class="card-body">
-                            <h4 class="card-title">Login</h4>
-
+                            <h4 class="card-title">Вход</h4>
                             <form method="POST" action="{{ route('login') }}" class="my-login-validation">
                                 @csrf
+
                                 <div class="form-group mb-4">
-                                    <label for="email" class="">{{ __('Email Address') }}</label>
+                                    <label for="phone" class="pb-1">{{ __('Номер телефона') }}</label>
 
-                                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+                                    <input id="phone" type="tel"
+                                           class="form-control @error('phone') is-invalid @enderror"
+                                           name="phone"
+                                           value="7"
+                                           required autocomplete="phone"
+                                           placeholder="7___ ___ __ __" pattern="[7]{1}[0-9]{3}[0-9]{3}[0-9]{2}[0-9]{2}">
 
-                                    @error('email')
+                                    @error('phone')
                                     <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
+                                        <strong>{{ $message }}</strong>
+                                    </span>
                                     @enderror
                                 </div>
 
                                 <div class="form-group mb-4">
-                                    <label for="password" class="">{{ __('Password') }}
+                                    <label for="password" class="pb-1">{{ __('Пароль') }}
                                         @if (Route::has('password.request'))
                                             <a class="float-end" href="{{ route('password.request') }}">
-                                                {{ __('Forgot Your Password?') }}
+                                                {{ __('Забыли пароль?') }}
                                             </a>
                                         @endif
                                     </label>
@@ -42,8 +47,8 @@
 
                                     @error('password')
                                     <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
+                                        <strong>{{ $message }}</strong>
+                                    </span>
                                     @enderror
                                 </div>
 
@@ -52,14 +57,14 @@
                                         <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
 
                                         <label class="form-check-label" for="remember">
-                                            {{ __('Remember Me') }}
+                                            {{ __('Запомнить меня') }}
                                         </label>
                                     </div>
                                 </div>
 
                                 <div class="form-group m-0">
                                     <button type="submit" class="btn w-100 btn-danger btn-block">
-                                        {{ __('Login') }}
+                                        {{ __('Войти') }}
                                     </button>
                                 </div>
                             </form>

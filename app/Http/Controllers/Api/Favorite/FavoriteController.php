@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api\Favorite;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Favorite\StoreRequest;
 use App\Http\Requests\Favorite\UpdateRequest;
+use App\Http\Resources\Product\MiniProductCollection;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Favorite\Service;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FavoriteController extends Controller
 {
@@ -53,6 +56,35 @@ class FavoriteController extends Controller
     public function destroy(UpdateRequest $request, Service $service, User $user){
         $data = $request->validated();
         return $service->destroy($data, $user);
+    }
+
+    public function products(Request $request){
+//        return 12;
+        $data = $request->validate([
+            'products' => ['required']
+        ]);
+        if (!count(json_decode($data['products'], true))){
+            return [];
+        }
+        $products = [];
+        foreach (json_decode($data['products'], true) as $product) {
+            $_product = Product::where('id', (int)$product)->first();
+            if ($_product){
+                $products[] = $_product->toArray();
+            }
+            else{
+                $variant = DB::select("
+                        select variants_json->>0 as data
+                        from variants
+                        where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
+                );
+                $products[] = json_decode($variant[0]->data, true);
+            }
+        }
+        if (count($products)){
+            return new MiniProductCollection($products);
+        }
+        return [];
     }
 
 }

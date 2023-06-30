@@ -14,14 +14,14 @@ class Service
     public function store($data)
     {
 
-      if ($data['first_name'] and $data['phone']) {
+      if ($data['first_name'] and $data['phone'] and $data['password']) {
           return DB::transaction(function() use ($data) {
 
               $user = (new \App\Models\User)->firstOrCreate([
                   'first_name' => $data['first_name'],
                   'email' => $data['email'] ?? null,
                   'phone' => $data['phone'],
-                  'password' => isset($data['password']) ? Hash::make($data['password']) : null,
+                  'password' => Hash::make($data['password']),
                   'position_id' => 2
               ]);
 
@@ -47,13 +47,13 @@ class Service
     }
     public function storeClient($data)
     {
-        if ($data['first_name'] and $data['phone']) {
+        if ($data['first_name'] and $data['phone'] and $data['password']) {
             return DB::transaction(function() use ($data) {
                 $user = (new \App\Models\User)->firstOrCreate([
                     'first_name' => $data['first_name'],
                     'email' => $data['email'] ?? null,
                     'phone' => $data['phone'],
-                    'password' => isset($data['password']) ? Hash::make($data['password']) : null,
+                    'password' => Hash::make($data['password']),
                     'position_id' => 1
                 ]);
 

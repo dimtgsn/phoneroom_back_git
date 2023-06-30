@@ -19,10 +19,8 @@ class StoreRequest extends FormRequest
             'last_name' => 'string|nullable|max:255|injection',
             'phone' => 'string|phone|required|injection',
             'email' => 'string|email|nullable|max:255|injection',
-            'password' => 'nullable|string|min:8|confirmed|injection',
+            'password' => 'required|string|min:8|confirmed|injection',
             'fullAddress' => 'string|nullable|injection',
-//            'street' => 'string|nullable|max:255',
-//            'house' => 'string|nullable|max:255',
         ];
     }
 }

@@ -45,7 +45,7 @@
                                 Админ
                             @endif
                         </th>
-                        <th scope="col">{{ $u->email }}</th>
+                        <th scope="col">{{ $u->email ?? 'Не задан' }}</th>
                         <th scope="col">{{ $u->phone }}</th>
                         <th scope="col">{{ $u->profile->address->fullAddress ?? 'Не задан' }}</th>
                         <th scope="col">{{ $u->created_at }}</th>

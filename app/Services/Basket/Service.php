@@ -6,11 +6,18 @@ use App\Models\Basket;
 
 class Service
 {
-    public function create($user)
-    {;
-        $basket = Basket::firstOrCreate([
-            'user_id' => $user->id,
-        ]);
+    public function create($user, $session_id)
+    {
+        if ($session_id){
+            Basket::firstOrCreate([
+                'session_id' => $session_id,
+            ]);
+        }
+        else{
+            Basket::firstOrCreate([
+                'user_id' => $user->id,
+            ]);
+        }
     }
 
     public function update($data, $user)

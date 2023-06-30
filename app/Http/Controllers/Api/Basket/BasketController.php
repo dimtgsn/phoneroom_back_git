@@ -47,8 +47,12 @@ class BasketController extends Controller
             return $products;
         }
         else{
-            $service->create($user);
-            return [];
+            if ($user){
+                $service->create($user, null);
+                return '';
+            }
+            $service->create(null, session()->getId());
+            return '';
         }
     }
 

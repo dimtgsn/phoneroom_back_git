@@ -13,17 +13,19 @@ class UpdateSearchIndexes
 
     public function handle(Logout $event)
     {
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantRatingDesc"
-        ]);
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantPriceDesc"
-        ]);
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantCreatedAtDesc"
-        ]);
-        Artisan::call(ImportAndUpdateIndexCommand::class, [
-            'model' => "App\Models\CategoryVariantPriceAsc"
-        ]);
+//        if (\Auth::user()->position_id === 2 || \Auth::user()->position_id === 3){
+//            Artisan::call(ImportAndUpdateIndexCommand::class, [
+//                'model' => "App\Models\CategoryVariantRatingDesc"
+//            ]);
+//            Artisan::call(ImportAndUpdateIndexCommand::class, [
+//                'model' => "App\Models\CategoryVariantPriceDesc"
+//            ]);
+//            Artisan::call(ImportAndUpdateIndexCommand::class, [
+//                'model' => "App\Models\CategoryVariantCreatedAtDesc"
+//            ]);
+//            Artisan::call(ImportAndUpdateIndexCommand::class, [
+//                'model' => "App\Models\CategoryVariantPriceAsc"
+//            ]);
+//        }
     }
 }

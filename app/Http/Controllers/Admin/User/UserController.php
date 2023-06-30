@@ -19,13 +19,14 @@ class UserController extends Controller
 
     public function create(){
 
-
         return view('admin.user.create');
     }
 
     public function store(StoreRequest $request, Service $service){
 
         $data = $request->validated();
+        $data['phone'] = preg_replace('/\D/','', $data['phone']);
+        $data['phone'] = '7'.$data['phone'];
         $service->store($data);
         return redirect()->route('admin.users.index');
     }

@@ -104,9 +104,9 @@
 {{--                        </div>--}}
                         <div class="input-group">
                             <div class="input-group-prepend">
-                                <span class="input-group-text">+7</span>
+                                <span class="input-group-text">7</span>
                             </div>
-                            <input value="{{ $user->phone }}" placeholder="{{ $user->phone }}" name="phone" type="tel"
+                            <input value="{{ mb_substr($user->phone, 1) }}" placeholder="{{ $user->phone }}" name="phone" type="tel"
                                    class="form-control @error('phone') is-invalid @enderror" id="phone" required
                                    autocomplete="phone" autofocus
                                    data-inputmask="&quot;mask&quot;: &quot;(999) 999-9999&quot;" data-mask="" inputmode="text">

@@ -18,7 +18,7 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next)
     {
         if(auth()->user()){
-            if (auth()->user()->position->name !== 'admin'){
+            if (auth()->user()->position_id === 1){
                 Auth::logout();
                 return redirect()->route('login');
             }

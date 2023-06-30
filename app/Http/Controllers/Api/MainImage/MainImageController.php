@@ -11,7 +11,7 @@ class MainImageController  extends Controller
 
     public function index(){
 
-        $images = MainImage::orderBy('position', 'ASC')->get();
+        $images = MainImage::select('path')->orderBy('position', 'ASC')->get();
         return new MainImageCollection($images);
     }
 

@@ -61,7 +61,7 @@
 
                                     <input id="email" type="email"
                                            class="form-control @error('email') is-invalid @enderror" name="email"
-                                           value="{{ old('email') }}" required autocomplete="email" autofocus>
+                                           value="{{ old('email') }}" autocomplete="email" autofocus>
 
                                     @error('email')
                                     <span class="invalid-feedback" role="alert">
@@ -86,7 +86,7 @@
                             <label for="phone" class="form-label">Номер телефона</label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <span class="input-group-text">+7</span>
+                                    <span class="input-group-text">7</span>
                                 </div>
                                 <input name="phone" type="tel"
                                     class="form-control @error('phone') is-invalid @enderror" id="phone" required

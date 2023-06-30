@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Product;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\StoreRequest;
 use App\Http\Requests\Product\UpdateRequest;
+use App\Http\Resources\Product\MiniProductCollection;
 use App\Http\Resources\Product\ProductCollection;
 use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\Product\TagResource;
@@ -91,5 +92,34 @@ class ProductController extends Controller
             }
             return new ProductResource($product);
         }
+    }
+
+    public function products(Request $request){
+        $data = $request->validate([
+            'products' => ['required']
+        ]);
+        $products = [];
+        if (!count(json_decode($data['products'], true))){
+            return [];
+        }
+        foreach (json_decode($data['products'], true) as $product) {
+            $product = is_array($product) ? $product[0] : $product;
+            $_product = Product::where('id', (int)$product)->first();
+            if ($_product){
+                $products[] = $_product->toArray();
+            }
+            else{
+                $variant = DB::select("
+                        select variants_json->>0 as data
+                        from variants
+                        where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
+                );
+                $products[] = json_decode($variant[0]->data, true);
+            }
+        }
+        if (count($products)){
+            return new MiniProductCollection($products);
+        }
+        return [];
     }
 }

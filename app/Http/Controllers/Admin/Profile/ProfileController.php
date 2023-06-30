@@ -23,6 +23,7 @@ class ProfileController extends Controller
 
         $data = $request->validated();
         $data['phone'] = preg_replace('/\D/','', $data['phone']);
+        $data['phone'] = '7'.$data['phone'];
         $profile = $service->update($data, $profile, $user);
         return redirect()->route('admin.profiles.index', $profile->slug);
     }
