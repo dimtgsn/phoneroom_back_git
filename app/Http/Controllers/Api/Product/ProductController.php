@@ -11,6 +11,7 @@ use App\Http\Resources\Product\ProductResource;
 use App\Http\Resources\Product\TagResource;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Comment;
 use App\Models\Option;
 use App\Models\Product;
 use App\Models\Property;
@@ -29,7 +30,9 @@ class ProductController extends Controller
         return new ProductCollection($products);
     }
     public function show($slug){
-        $product = Product::where('slug', $slug)->first();
+        $product = Product::where('slug', $slug)
+            ->with('category', 'tags', 'brand', 'property', 'variants_json')
+            ->first();
         if (empty($product) === true){
             $variant = DB::select("
                         select variants_json->>0 as data , product_id
@@ -40,7 +43,13 @@ class ProductController extends Controller
                 $productVariant = Product::find($variant[0]->product_id);
                 $variant = $variant[0]->data;
                 $variant = json_decode($variant, true);
-
+                $comments = Comment::where('product_id', $variant['id'])->where('type', 0)->get();
+                $variant['comments_count'] = $comments->count() ?? 0;
+                $variant['comments_count_5'] = $comments->where('rating', 5)->count() ?? 0;
+                $variant['comments_count_4'] = $comments->where('rating', 4)->count() ?? 0;
+                $variant['comments_count_3'] = $comments->where('rating', 3)->count() ?? 0;
+                $variant['comments_count_2'] = $comments->where('rating', 2)->count() ?? 0;
+                $variant['comments_count_1'] = $comments->where('rating', 1)->count() ?? 0;
                 $variant['category_name'] = $productVariant->category['name'];
                 $variant['variants_published'] = [];
                 foreach ($productVariant->variants as $variants){
@@ -90,6 +99,13 @@ class ProductController extends Controller
                 }
                 $product['images'] = $images;
             }
+            $comments = Comment::where('product_id', $product['id'])->where('type', 0)->get();
+            $product['comments_count'] = $comments->count() ?? 0;
+            $product['comments_count_5'] = $comments->where('rating', 5)->count() ?? 0;
+            $product['comments_count_4'] = $comments->where('rating', 4)->count() ?? 0;
+            $product['comments_count_3'] = $comments->where('rating', 3)->count() ?? 0;
+            $product['comments_count_2'] = $comments->where('rating', 2)->count() ?? 0;
+            $product['comments_count_1'] = $comments->where('rating', 1)->count() ?? 0;
             return new ProductResource($product);
         }
     }

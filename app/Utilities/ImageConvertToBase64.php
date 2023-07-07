@@ -10,7 +10,7 @@ use SplFileInfo;
 class ImageConvertToBase64
 {
 
-    public function convert($file){
+    static function convert($file){
 
         $path = pathinfo($file);
         $ext = mb_strtolower($path['extension']);

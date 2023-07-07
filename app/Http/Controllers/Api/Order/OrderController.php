@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Order;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\StoreRequest;
 use App\Http\Requests\Order\ZipCheckRequest;
+use App\Http\Resources\Order\OrderCollection;
+use App\Models\User;
 use App\Services\Order\Service;
 
 class OrderController  extends Controller
@@ -29,4 +31,12 @@ class OrderController  extends Controller
         return 1;
     }
 
+    public function index(User $user, Service $order_service){
+
+        $orders = $user->orders;
+        foreach ($orders as $i => $order){
+            $orders[$i]['products'] = $order_service->get_order_products($order, false)['products'];
+        }
+        return new OrderCollection($user->orders()->orderBy('created_at', 'DESC')->get());
+    }
 }

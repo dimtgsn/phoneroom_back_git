@@ -42,20 +42,18 @@ class Service
             unset($data['properties']);
         }
         $data_thumb_img = [];
-        $translation = new TranslationIntoLatin();
-        DB::transaction(function() use ($data, $data_thumb_img, $data_properties, $translation) {
+        DB::transaction(function() use ($data, $data_thumb_img, $data_properties) {
             $data['image'] = 'storage/'.\Storage::disk('public')->put('images/products', $data['image']);
-            $imageConvert = new ImageConvertToWebp();
             if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
                 || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
-                $data['image'] = $imageConvert->convert($data['image']);
+                $data['image'] = ImageConvertToWebp::convert($data['image']);
             }
             for ($i=1; $i<=4; $i++){
                 if (isset($data['path_'.$i])){
                     $data['path_'.$i] = 'storage/'.\Storage::disk('public')->put('images/thumbimg', $data['path_'.$i]);
                     if(str_ends_with($data['path_'.$i], "jpg") || str_ends_with($data['path_'.$i], "png")
                         || str_ends_with($data['path_'.$i], "gif") || str_ends_with($data['path_'.$i], "jpeg")){
-                        $data['path_'.$i] = $imageConvert->convert($data['path_'.$i], true);
+                        $data['path_'.$i] = ImageConvertToWebp::convert($data['path_'.$i], true);
                     }
                 }
             }
@@ -229,7 +227,7 @@ class Service
                 ]);
 
                 $product->update([
-                    'sku' => trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
+                    'sku' => trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
                 ]);
 
                 $category = Category::where('id', $product->category_id)->first();
@@ -237,8 +235,8 @@ class Service
                     $variant['id'] = str($product->id).'00'.str($i+1);
                     $variant['brand'] = $product->brand->name;
                     $variant['category'] = $product->category->name;
-                    $variant['slug'] = $variant['slug'] ?? str($translation->translate($product->slug.' '.$variant['name']))->slug();
-                    $variant['sku'] = trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
+                    $variant['slug'] = $variant['slug'] ?? str(TranslationIntoLatin::translate($product->slug.' '.$variant['name']))->slug();
+                    $variant['sku'] = trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
                     $product_variants = Variant::firstOrCreate([
                         'product_id' => $product->id,
                         'variants_json' => json_encode($variant, JSON_UNESCAPED_UNICODE),
@@ -298,7 +296,7 @@ class Service
                     unset($data['tags_id']);
                     $product = Product::firstOrCreate($data);
                     $product->update([
-                        'sku' => trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
+                        'sku' => trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
                     ]);
                     $product->tags()->attach($tags);
                 }
@@ -345,15 +343,13 @@ class Service
     public function update($data, $product)
     {
         $data_thumb_img = [];
-        $translation = new TranslationIntoLatin();
 
         $data_properties = [];
         if (isset($data['properties'])){
             $data_properties = $data['properties'];
         }
-        $imageConvert = new ImageConvertToWebp();
         $myWarehouse = MyWarehouse::select('token')->first();
-        DB::transaction(function() use ($data, $data_thumb_img, $product, $data_properties, $imageConvert, $translation, $myWarehouse) {
+        DB::transaction(function() use ($data, $data_thumb_img, $product, $data_properties, $myWarehouse) {
 
             if(empty($data['image']) !== true){
                 $data['image'] = 'storage/'.\Storage::disk('public')->put('images/products', $data['image']);
@@ -362,7 +358,7 @@ class Service
                 }
                 if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
                     || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
-                    $data['image'] = $imageConvert->convert($data['image'], true);
+                    $data['image'] = ImageConvertToWebp::convert($data['image'], true);
                 }
             }
             for ($i=1; $i<=4; $i++){
@@ -378,7 +374,7 @@ class Service
                         $data['path_'.$i] = 'storage/'.\Storage::disk('public')->put('images/thumbimg', $data['path_'.$i]);
                         if(str_ends_with($data['path_'.$i], "jpg") || str_ends_with($data['path_'.$i], "png")
                             || str_ends_with($data['path_'.$i], "gif") || str_ends_with($data['path_'.$i], "jpeg")){
-                            $data['path_'.$i] = $imageConvert->convert($data['path_'.$i], true);
+                            $data['path_'.$i] = ImageConvertToWebp::convert($data['path_'.$i], true);
                         }
                     }
                     if (isset($data['del_path_'.$i]) && $data['del_path_'.$i] !== null && isset($data['path_'.$i]) === false){
@@ -578,7 +574,7 @@ class Service
                 ]);
 
                 $product->update([
-                    'sku' => trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
+                    'sku' => trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
                 ]);
 
 //                if ($product->option && json_decode($product->option->options_json, true) === $data['options']){
@@ -591,8 +587,8 @@ class Service
                     $variant['id'] = str($product->id).'00'.str($i+1);
                     $variant['brand'] = $product->brand->name;
                     $variant['category'] = $product->category->name;
-                    $variant['slug'] = $variant['slug'] ?? str($translation->translate($product->slug.' '.$variant['name']))->slug();
-                    $variant['sku'] = trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
+                    $variant['slug'] = $variant['slug'] ?? str(TranslationIntoLatin::translate($product->slug.' '.$variant['name']))->slug();
+                    $variant['sku'] = trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
 
                     if($product->option === null){
                         $variant['image'] = $product->image;
@@ -714,7 +710,7 @@ class Service
                     'published' => $data['published'] ?? $product->published,
                 ]);
                 $product->update([
-                    'sku' => trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
+                    'sku' => trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$product->id.' '.$product->category_id.' '.$product->brand_id)))),
                 ]);
 
                 if (isset($product->option)){
@@ -816,6 +812,7 @@ class Service
                     $category->properties()->sync($property->id);
                 }
             }
+            // TODO поменять всё под сервис MyWarehouse
             //my-warehouse
 //            if ($product->exported === true) {
 //                $image_base64 = new ImageConvertToBase64();
@@ -1014,7 +1011,6 @@ class Service
 
     public function variant_update($data, $product, $variant_slug)
     {
-        $translation = new TranslationIntoLatin();
 
         $data_thumb_img = [];
         $data_properties = [];
@@ -1029,11 +1025,9 @@ class Service
         if (isset($data['properties'])){
             $data_properties = $data['properties'];
         }
-        $imageConvert = new ImageConvertToWebp();
-
         $myWarehouse = MyWarehouse::select('token')->first();
 
-        DB::transaction(function() use ($data, $data_thumb_img, $variant_slug, $product, $var_img, $var_id, $data_properties, $imageConvert, $translation, $myWarehouse) {
+        DB::transaction(function() use ($data, $data_thumb_img, $variant_slug, $product, $var_img, $var_id, $data_properties, $myWarehouse) {
 
             if(empty($data['image']) !== true){
                 $data['image'] = 'storage/'.\Storage::disk('public')->put('images/products', $data['image']);
@@ -1052,7 +1046,7 @@ class Service
                 }
                 if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
                     || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
-                    $data['image'] = $imageConvert->convert($data['image'], true);
+                    $data['image'] = ImageConvertToWebp::convert($data['image'], true);
                 }
             }
             for ($i=1; $i<=4; $i++){
@@ -1062,7 +1056,7 @@ class Service
                         $data['path_'.$i] = 'storage/'.\Storage::disk('public')->put('images/thumbimg', $data['path_'.$i]);
                         if(str_ends_with($data['path_'.$i], "jpg") || str_ends_with($data['path_'.$i], "png")
                             || str_ends_with($data['path_'.$i], "gif") || str_ends_with($data['path_'.$i], "jpeg")){
-                            $data['path_'.$i] = $imageConvert->convert($data['path_'.$i], true);
+                            $data['path_'.$i] = ImageConvertToWebp::convert($data['path_'.$i], true);
                         }
                     }
                     if ($product->images){
@@ -1136,8 +1130,8 @@ class Service
 
                         $variant['brand'] = json_decode($product_variant->variants_json, true)['brand'];
                         $variant['category'] = json_decode($product_variant->variants_json, true)['category'];
-                        $variant['slug'] = $variant['slug'] ?? str($translation->translate($product->slug.' '.$variant['name']))->slug();
-                        $variant['sku'] = trim(str_replace(" ", "-",strtoupper($translation->translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
+                        $variant['slug'] = $variant['slug'] ?? str(TranslationIntoLatin::translate($product->slug.' '.$variant['name']))->slug();
+                        $variant['sku'] = trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
 //                        if($product->exported){
 //                            $variant['my_warehouse_id'] = json_decode($product_variant->variants_json, true)['my_warehouse_id'];
 //                        }

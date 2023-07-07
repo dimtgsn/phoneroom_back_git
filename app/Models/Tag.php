@@ -26,8 +26,7 @@ class Tag extends Model
         parent::boot();
 
         static::creating(function (Tag $tag) {
-            $translation = new TranslationIntoLatin();
-            $tag->slug = $tag->slug ?? str($translation->translate($tag->name))->slug();
+            $tag->slug = $tag->slug ?? str(TranslationIntoLatin::translate($tag->name))->slug();
         });
     }
 

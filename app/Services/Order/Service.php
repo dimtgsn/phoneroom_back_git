@@ -6,6 +6,7 @@ use App\Models\MyWarehouse;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Variant;
+use Illuminate\Support\Facades\DB;
 
 class Service
 {
@@ -26,11 +27,18 @@ class Service
                 if ($pr){
                     $price = $pr->price;
                 } else{
-                    foreach (Variant::all() as $variants){
-                        if (json_decode($variants->variants_json, true)['id'] === $product['id']){
-                            $price = (int)json_decode($variants->variants_json, true)['price'];
-                        }
-                    }
+                    $product_id = $product['id'];
+                    $variant = DB::select("
+                        select variants_json->>0 as data , product_id
+                        from variants
+                        where (variants_json->>0)::jsonb  @> '{\"id\": \"$product_id\"}'"
+                    )[0]->data;
+                    $price = (int)json_decode($variant, true)['price'];
+//                    foreach (Variant::all() as $variants){
+//                        if (json_decode($variants->variants_json, true)['id'] === $product['id']){
+//                            $price = (int)json_decode($variants->variants_json, true)['price'];
+//                        }
+//                    }
                 }
                 \DB::table('order_products')->insert([
                     'quantity' => $product['quantity'],
@@ -52,7 +60,6 @@ class Service
 
         return false;
     }
-
 
     public function export_order($order, $service)
     {

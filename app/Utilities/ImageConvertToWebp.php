@@ -10,7 +10,7 @@ use SplFileInfo;
 class ImageConvertToWebp
 {
 
-    public function convert($source, $removeOld = false, $quality = 100){
+    static function convert($source, $removeOld = false, $quality = 100){
 
         $dir = pathinfo($source, PATHINFO_DIRNAME);
         $name = pathinfo($source, PATHINFO_FILENAME);

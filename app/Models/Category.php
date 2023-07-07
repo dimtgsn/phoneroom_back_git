@@ -68,8 +68,7 @@ class Category extends Model
         parent::boot();
 
         static::creating(function (Category $category) {
-            $translation = new TranslationIntoLatin();
-            $category->slug = $category->slug ?? str($translation->translate($category->name))->slug();
+            $category->slug = $category->slug ?? str(TranslationIntoLatin::translate($category->name))->slug();
         });
     }
 

@@ -53,13 +53,10 @@ class Service
             if ($product->exported === true){
                 return false;
             }
-
-            $image_base64 = new ImageConvertToBase64();
-            $image_to_jpeg = new ImageConvertToWebp();
             $productImages = [
                 [
                     "filename" => $product->slug.'.jpeg',
-                    "content" => $image_base64->convert($image_to_jpeg->convert($product->image)),
+                    "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($product->image)),
                 ]
             ];
             $images_without_variants = Image::where('product_id', $product->id)->where('variant_id', null)->get();
@@ -68,7 +65,7 @@ class Service
                     if($img->path){
                         $productImages[] = [
                             "filename" => $product->slug.'-thumb-image-'.$img->position.'.jpeg',
-                            "content" => $image_base64->convert($image_to_jpeg->convert($img->path)),
+                            "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($img->path)),
                         ];
                     }
                 }
@@ -180,7 +177,7 @@ class Service
                     $variantImages = [
                         [
                             "filename" => $product->slug.'.jpeg',
-                            "content" => $image_base64->convert($image_to_jpeg->convert($variant['image'])),
+                            "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($variant['image'])),
                         ]
                     ];
                     $images_with_variants = Image::where('product_id', $product->id)->where('variant_id', (int)$variant['id'])->get();
@@ -189,7 +186,7 @@ class Service
                             if ($img->path){
                                 $variantImages[] = [
                                     "filename" => $variant['slug'].'-thumb-image-'.$img->position.'.jpeg',
-                                    "content" => $image_base64->convert($image_to_jpeg->convert($img->path)),
+                                    "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($img->path)),
                                 ];
                             }
                         }

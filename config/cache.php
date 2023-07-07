@@ -14,7 +14,7 @@ return [
     | not explicitly specified when executing a given caching function.
     |
     */
-
+    // TODO использовать memcached or redis
     'default' => env('CACHE_DRIVER', 'file'),
 
     /*

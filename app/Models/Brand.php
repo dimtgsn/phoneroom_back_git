@@ -23,8 +23,7 @@ class Brand extends Model
         parent::boot();
 
         static::creating(function (Brand $brand) {
-            $translation = new TranslationIntoLatin();
-            $brand->slug = $brand->slug ?? str($translation->translate($brand->name))->slug();
+            $brand->slug = $brand->slug ?? str(TranslationIntoLatin::translate($brand->name))->slug();
         });
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Utilities\DateFormatting;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,4 +39,5 @@ class Order extends Model
     public function delivery(): BelongsTo{
         return  $this->BelongsTo(Delivery::class);
     }
+
 }

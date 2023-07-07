@@ -24,8 +24,6 @@ class CategoryVariantPriceAsc extends Model
         $client = new Client('http://127.0.0.1:7700');
 
         $category = Category::find($this->id);
-        $translation = new TranslationIntoLatin();
-
         $parentCategory = Category::query()
             ->select('slug')
             ->where('id', $category->parent_id)
@@ -59,7 +57,7 @@ class CategoryVariantPriceAsc extends Model
                         $options['name'][] = $name;
                         $name = str_replace(" ", '', $name);
                         $name = preg_replace('/[^ a-zа-яё\d]/ui', '',$name );
-                        $options['value'] += array($translation->translate($name) => $val);
+                        $options['value'] += array(TranslationIntoLatin::translate($name) => $val);
                     }
                     $client->index('category_variant_price_asc')->updateDocuments([
                         'id' => $variant_price_asc['id'],

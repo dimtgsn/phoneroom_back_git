@@ -18,12 +18,12 @@ class CategoryController extends Controller
     public function index(){
 
         return new CategoryCollection(
-//            Cache::remember('category', 60*60*24, function () {
-                 Category::with('brands')
-                    ->orderBy('id')
-                    ->get()
-//            })
+            Cache::remember('category', 60*60*24, function (){
+                return Category::orderBy('id')->get();
+            })
         );
+
+//        return new CategoryCollection(Category::orderBy('id')->get());
     }
 
     public function show(Category $category){

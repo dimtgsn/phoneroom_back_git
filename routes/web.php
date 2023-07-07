@@ -142,6 +142,11 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
         Route::get('/{order}/chose_delivery', 'OrderController@choose_delivery')->name('admin.orders.choose_delivery');
         Route::post('/{order}/parsel_create/{delivery_id}', 'OrderController@parsel_create')->name('admin.orders.parsel_create');
     });
+
+    Route::group(['namespace' => '\App\Http\Controllers\Admin\Comment', 'prefix' => 'comments'], function (){
+        Route::get('/{comment}', 'CommentController@create')->name('admin.comments.create');
+        Route::post('/{comment}', 'CommentController@store')->name('admin.comments.store');
+    });
 });
 
 //Notification::route('telegram', env('TELEGRAM_CHAT_ID'))

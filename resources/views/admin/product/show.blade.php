@@ -6,7 +6,6 @@
         <div class="card-body mt-2">
             <div class="row">
                 <div class="col-12 col-sm-6">
-                    <h3 class="d-inline-block d-sm-none">LOWA Men’s Renegade GTX Mid Hiking Boots Review</h3>
                     <div class="col-12">
                         <img  src="{{ asset($variant['image'] ?? asset($product->image)) }}" class="product-image" alt="Product Image">
                     </div>
@@ -107,15 +106,15 @@
                 <nav class="w-100">
                     <div class="nav nav-tabs" id="product-tab" role="tablist">
                         <a class="nav-item nav-link active" id="product-desc-tab" data-toggle="tab" href="#product-desc" role="tab" aria-controls="product-desc" aria-selected="true">Описание</a>
-                        <a class="nav-item nav-link" id="product-comments-tab" data-toggle="tab" href="#product-comments" role="tab" aria-controls="product-comments" aria-selected="false">Характеристики</a>
-{{--                        <a class="nav-item nav-link" id="product-rating-tab" data-toggle="tab" href="#product-rating" role="tab" aria-controls="product-rating" aria-selected="false">Отзывы</a>--}}
+                        <a class="nav-item nav-link" id="product-properties-tab" data-toggle="tab" href="#product-properties" role="tab" aria-controls="product-properties" aria-selected="false">Характеристики</a>
+                        <a class="nav-item nav-link" id="product-comments-tab" data-toggle="tab" href="#product-comments" role="tab" aria-controls="product-comments" aria-selected="false">Отзывы</a>
                     </div>
                 </nav>
                 <div class="tab-content p-3" id="nav-tabContent">
                     <div class="tab-pane fade active show" id="product-desc" role="tabpanel" aria-labelledby="product-desc-tab" style="white-space: pre-line;">
                         {{ $variant['description'] ?? $product->description  }}
                     </div>
-                    <div class="tab-pane fade" id="product-comments" role="tabpanel" aria-labelledby="product-comments-tab">
+                    <div class="tab-pane fade" id="product-properties" role="tabpanel" aria-labelledby="product-properties-tab">
                         @if($variant['country'] ?? $product->country)
                             <span class="text-md d-block mb-2">Страна - {{ $variant['country'] ?? $product->country }}</span>
                         @endif
@@ -149,7 +148,46 @@
                             @endif
                         </ul>
                     </div>
-{{--                    <div class="tab-pane fade" id="product-rating" role="tabpanel" aria-labelledby="product-rating-tab"> Cras ut ipsum ornare, aliquam ipsum non, posuere elit. In hac habitasse platea dictumst. Aenean elementum leo augue, id fermentum risus efficitur vel. Nulla iaculis malesuada scelerisque. Praesent vel ipsum felis. Ut molestie, purus aliquam placerat sollicitudin, mi ligula euismod neque, non bibendum nibh neque et erat. Etiam dignissim aliquam ligula, aliquet feugiat nibh rhoncus ut. Aliquam efficitur lacinia lacinia. Morbi ac molestie lectus, vitae hendrerit nisl. Nullam metus odio, malesuada in vehicula at, consectetur nec justo. Quisque suscipit odio velit, at accumsan urna vestibulum a. Proin dictum, urna ut varius consectetur, sapien justo porta lectus, at mollis nisi orci et nulla. Donec pellentesque tortor vel nisl commodo ullamcorper. Donec varius massa at semper posuere. Integer finibus orci vitae vehicula placerat. </div>--}}
+                    @if(count($comments) !== 0)
+                        <div class="tab-pane fade" id="product-comments" role="tabpanel" aria-labelledby="product-comments-tab">
+                            @foreach($comments as $comment)
+                                @if($comment->type === 0)
+                                    <div class="card-wrapper d-inline-block">
+                                        <div class="card card-info">
+                                            <div class="card-header">
+                                                <div class="d-flex justify-content-between">
+                                                    <h6 class="card-title">{{ ($comment->user->last_name ?? "").' '.$comment->user->first_name.' '.($comment->user->middle_name ?? "") }}</h6>
+                                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                    <h6 class="card-title">{{ $comment->created_at }}</h6>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="container">
+                                                    <h6>
+                                                        <b>Достоинства: </b>
+                                                        {{ $comment->advantages ?? "-" }}
+                                                    </h6>
+                                                    <h6>
+                                                        <b>Недостатки: </b>
+                                                        {{ $comment->disadvantages ?? "-" }}
+                                                    </h6>
+                                                    <p>
+                                                        <b>Отзыв:  </b>
+                                                        {{ $comment->comment ?? "-" }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer">
+                                                <a  href="{{ route('admin.comments.create', $comment->id) }}">Ответить</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    @else
+                        Отзывы отсутствуют
+                    @endif
                 </div>
             </div>
         </div>

@@ -20,5 +20,6 @@ class VerifyCsrfToken extends Middleware
         'api/v1/baskets/create',
         'api/v1/favorites/create',
         'api/v1/compares/create',
+        'api/v1/comments/*',
     ];
 }

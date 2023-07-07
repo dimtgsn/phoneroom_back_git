@@ -9,6 +9,7 @@ use App\Http\Requests\Product\UpdateRequest;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\CategoryVariantRatingDesc;
+use App\Models\Comment;
 use App\Models\Enter;
 use App\Models\Image;
 use App\Models\MyWarehouse;
@@ -52,20 +53,23 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         $variant = [];
-        return view('admin.product.show', compact('product', 'variant'));
+        $comments = Comment::where('product_id', $product->id)->get();
+        return view('admin.product.show', compact('product', 'variant', 'comments'));
     }
 
     public function variant_show(Product $product, $variant_slug)
     {
         $variant = [];
+        $comments = [];
         if (isset($product->variants)){
             foreach ($product->variants as $variants){
                 if (json_decode($variants->variants_json, true)['slug'] === $variant_slug){
                     $variant = json_decode($variants->variants_json, true);
+                    $comments = Comment::where('product_id', $variant['id'])->get();
                 }
             }
         }
-        return view('admin.product.show', compact('product', 'variant'));
+        return view('admin.product.show', compact('product', 'variant', 'comments'));
     }
 
     public function edit(Product $product)

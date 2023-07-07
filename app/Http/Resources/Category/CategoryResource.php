@@ -21,7 +21,7 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'name' => $this->name,
             'parent_id' => $this->parent_id,
-            'brands' => $this->brands,
+//            'brands' => $this->brands,
 //            'brand_id' => $this->whenPivotLoaded('brand_category', function () {
 //                return $this->pivot->brand_id;
 //            }),

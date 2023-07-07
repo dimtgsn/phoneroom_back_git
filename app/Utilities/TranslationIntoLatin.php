@@ -3,7 +3,7 @@ namespace App\Utilities;
 
 class TranslationIntoLatin
 {
-    public function translate($value){
+    static function translate($value){
         $value = (string) $value;
         $value = trim($value);
         $value = function_exists('mb_strtolower') ? mb_strtolower($value) : strtolower($value);

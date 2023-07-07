@@ -15,14 +15,12 @@ class Service
 {
     public function store($data)
     {
-
-        $imageConvert = new ImageConvertToWebp();
-        DB::transaction(function() use ($data, $imageConvert) {
+        DB::transaction(function() use ($data) {
             if (isset($data['image'])){
                 $data['image'] = 'storage/'.\Storage::disk('public')->put('images/categories', $data['image']);
                 if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
                     || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
-                    $data['image'] = $imageConvert->convert($data['image'], true);
+                    $data['image'] = ImageConvertToWebp::convert($data['image'], true);
                 }
             }
             if (isset($data['brands_id'])){
@@ -41,9 +39,7 @@ class Service
 
     public function update($data, $category)
     {
-
-        $imageConvert = new ImageConvertToWebp();
-        DB::transaction(function() use ($data, $imageConvert, $category) {
+        DB::transaction(function() use ($data, $category) {
 
             if(empty($data['image']) !== true){
                 $data['image'] = 'storage/'.Storage::disk('public')->put('images/categories', $data['image']);
@@ -52,7 +48,7 @@ class Service
                 }
                 if(str_ends_with($data['image'], "jpg") || str_ends_with($data['image'], "png")
                     || str_ends_with($data['image'], "gif") || str_ends_with($data['image'], "jpeg")){
-                    $data['image'] = $imageConvert->convert($data['image'], true);
+                    $data['image'] = ImageConvertToWebp::convert($data['image'], true);
                 }
             }
             $category->update([

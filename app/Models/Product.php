@@ -73,9 +73,7 @@ class Product extends Model
         parent::boot();
 
         static::creating(function (Product $product) {
-            $translation = new TranslationIntoLatin();
-
-            $product->slug = $product->slug ?? str($translation->translate($product->name))->slug();
+            $product->slug = $product->slug ?? str(TranslationIntoLatin::translate($product->name))->slug();
 //            $variants = json_decode($product->variants, true);
 //            for ($i=0; $i<count($variants); $i++){
 //                $variants[$i]['id'] = str($product->id).'00'.str($i+1);
