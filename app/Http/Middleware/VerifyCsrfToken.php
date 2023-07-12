@@ -11,7 +11,6 @@ class VerifyCsrfToken extends Middleware
      *
      * @var array<int, string>
      */
-    // TODO разобраться с этим
     protected $except = [
         'api/v1/users/*',
         'users/login',
@@ -20,6 +19,7 @@ class VerifyCsrfToken extends Middleware
         'api/v1/baskets/create',
         'api/v1/favorites/create',
         'api/v1/compares/create',
+        'api/v1/orders/create',
         'api/v1/comments/*',
     ];
 }

@@ -31,7 +31,7 @@ class ProductController extends Controller
     }
     public function show($slug){
         $product = Product::where('slug', $slug)
-            ->with('category', 'tags', 'brand', 'property', 'variants_json')
+            ->with('category', 'tags', 'brand', 'property', 'variants')
             ->first();
         if (empty($product) === true){
             $variant = DB::select("
@@ -63,6 +63,7 @@ class ProductController extends Controller
                 $variant['brand_slug'] = $productVariant->brand['slug'];
                 $variant['product_slug'] = $productVariant->slug;
                 $variant['brand_image'] = $productVariant->brand['image'];
+                $variant['rating'] = (float)$variant['rating'];
                 $variant['images'] = [array("path" => $variant['image'])];
                 foreach ($productVariant->images as $img){
                     if ($img->variant_id == $variant['id']){

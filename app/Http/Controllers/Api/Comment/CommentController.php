@@ -61,13 +61,12 @@ class CommentController extends Controller
         foreach ($user_orders->orders as $order){
             $order_products = $order_service->get_order_products($order, false)['products'];
             foreach ($order_products as $product){
-                if ((int)$product['id'] === $data['product_id']){
+                if ((int)$product['product']['id'] === $data['product_id']){
                     $flag = true;
                 }
             }
         }
-        // TODO не забыть включить проверку на приобретение товара
-        if (!$flag){
+        if ($flag){
             $service->create($data);
             return true;
         }

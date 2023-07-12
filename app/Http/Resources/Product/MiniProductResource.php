@@ -27,7 +27,7 @@ class MiniProductResource extends JsonResource
             'price' => $this['price'],
             'units_in_stock'=> $this['units_in_stock'],
             'old_price' => $this['old_price'],
-            'rating' => $this['rating'],
+            'rating' => (float)$this['rating'],
             'published'=> $this['published'],
         ];
     }

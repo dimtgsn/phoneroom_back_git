@@ -23,7 +23,7 @@ class OrderResource extends JsonResource
             'status' => $this->status->id === 5 ? 'В обработке' : $this->status->name,
             'total' => $this->total,
             'created_at' => DateFormatting::format($this->created_at),
-            'delivery_date' => DateFormatting::format($this->delivery_date),
+            'delivery_date' => $this->delivery_date ? DateFormatting::format($this->delivery_date) : $this->delivery_date,
             'products' => $this->products,
             'delivery' => ($this->delivery->name ?? '').' '.($this->delivery->type ?? ''),
         ];

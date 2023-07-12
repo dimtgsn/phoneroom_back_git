@@ -1,10 +1,13 @@
 <?php
 
+use App\Mail\Order\OrderCreatedMail;
+use App\Models\MyWarehouse;
+use App\Models\Order;
 use App\Notifications\Telegram;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Notification;
 
-
+// TODO php imagick
 //Route::get('/admin/login/Erw12sd', function () {
 //    return view('auth.login');
 //})->name('login');
@@ -150,4 +153,14 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
 });
 
 //Notification::route('telegram', env('TELEGRAM_CHAT_ID'))
-//    ->notify(new Telegram);
+//    ->notify(new Telegram(Order::with('status')->where('id', 10)->first()));
+
+Route::group(['namespace' => '\App\Http\Controllers\Admin\Order', 'prefix' => 'orders'], function (){
+    Route::get('/export', 'OrderController@export');
+});
+// TODO сделать отправку уведомлений на почту о создании заказа и поместить в очередь
+Route::get('/email_test', function (){
+    $order = Order::with('status')->first();
+    Mail::to('gasanyandmitry@yandex.ru')->send(new OrderCreatedMail($order));
+});
+

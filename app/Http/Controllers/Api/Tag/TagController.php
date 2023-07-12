@@ -35,7 +35,7 @@ class TagController extends Controller
                         'category_id' => $category->id,
                         'quantity' => 1,
                         'old_price' => json_decode($variant->variants_json, true)['old_price'],
-                        'rating' => json_decode($variant->variants_json, true)['rating'],
+                        'rating' => (float)json_decode($variant->variants_json, true)['rating'],
                         'units_in_stock' => (int)json_decode($variant->variants_json, true)['units_in_stock'],
                         'published' => json_decode($variant->variants_json, true)['published'],
                         'properties' => json_decode($tag->products[$i]->property->properties_json, true),
@@ -55,7 +55,7 @@ class TagController extends Controller
                    'category_slug' => $tag->products[$i]->category->slug,
                    'category_id' => $category->id,
                    'old_price' => $tag->products[$i]->old_price,
-                   'rating' => $tag->products[$i]->rating,
+                   'rating' => (float)$tag->products[$i]->rating,
                    'units_in_stock' => (int)$tag->products[$i]->units_in_stock,
                 ];
 //                $tag->products[$i] = $product_or_variants;

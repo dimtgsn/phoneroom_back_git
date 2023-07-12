@@ -18,6 +18,7 @@ class StoreRequest extends FormRequest
             'user_id' => 'integer|required|injection',
             'total' => 'integer|required|injection',
             'ship_address' => 'string|required|injection',
+            'Zip' => 'string|required|injection|digits:6',
         ];
     }
 }

@@ -46,25 +46,26 @@ class UserController extends Controller
 
     public function register(StoreRequest $request, Service $service, \App\Services\Profile\Service $service_profile){
         $data = $request->validated();
+        $credentials_data = [];
         $data['phone'] = preg_replace('/\D/','', $data['phone']);
         if ($data['phone'][0] === '8'){
             $data['phone'][0] = '7';
         }
+        $credentials_data['first_name'] = $data['first_name'];
+        $credentials_data['phone'] = $data['phone'];
+        $credentials_data['password'] = $data['password'];
         $user = User::where('phone', $data['phone'])->first();
-        if ($user){
-            abort(404);
-        }
-        else{
+        if (!$user){
             $user = $service->storeClient($data);
-            if (Auth::attempt($data)) {
-                $request->session()->regenerate();
-                return [
-                    'data' => [
-                        'id' => auth()->user()->id,
-                        'first_name' => auth()->user()->first_name,
-                    ],
-                ];
-            }
+        }
+        if (Auth::attempt($credentials_data)) {
+            $request->session()->regenerate();
+            return [
+                'data' => [
+                    'id' => auth()->user()->id,
+                    'first_name' => auth()->user()->first_name,
+                ],
+            ];
         }
         return ':(';
     }
@@ -97,5 +98,6 @@ class UserController extends Controller
     public function getIpInfo() {
         $dadata = DaDataAddress::iplocate(\Request::ip(), 2);
         return $dadata['location']['data']['city'] ?? $dadata['location'];
+//        return 'Саратов';
     }
 }

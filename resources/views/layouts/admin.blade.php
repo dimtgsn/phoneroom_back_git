@@ -88,7 +88,7 @@
                 <img src="{{ asset(\App\Models\Logo::all()->first()->path) }}" alt="Logo"
                      class="brand-image img-circle elevation-3">
                 <span class="brand-text font-weight-normal m-0 p-0">
-                    {{ env('app_name') }}
+                    {{ env('APP_NAME', 'Телефон.рум') }}
                 </span>
             </a>
             <a href="{{ route('admin.logo.edit') }}" class="text-white pl-4">

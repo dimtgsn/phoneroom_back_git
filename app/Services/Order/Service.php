@@ -34,11 +34,6 @@ class Service
                         where (variants_json->>0)::jsonb  @> '{\"id\": \"$product_id\"}'"
                     )[0]->data;
                     $price = (int)json_decode($variant, true)['price'];
-//                    foreach (Variant::all() as $variants){
-//                        if (json_decode($variants->variants_json, true)['id'] === $product['id']){
-//                            $price = (int)json_decode($variants->variants_json, true)['price'];
-//                        }
-//                    }
                 }
                 \DB::table('order_products')->insert([
                     'quantity' => $product['quantity'],
@@ -55,7 +50,16 @@ class Service
         });
 
         if ($order){
-             return $this->export_order($order, new \App\Services\MyWarehouse\Service);
+            // TODO new code
+            $new_order = $this->export_order($order, new \App\Services\MyWarehouse\Service);
+             if($new_order !== false){
+                 return [
+                        'myWarehouseNewOrderId' => $new_order['id'],
+                        'order' => $order
+                     ];
+             }
+             $order->delete();
+             return false;
         }
 
         return false;
@@ -68,7 +72,7 @@ class Service
         $products = $data['products'];
         $client_data = [
             'name' => $order->user->profile->last_name.' '.$order->user->first_name.' '.$order->user->profile->middle_name,
-            'email' => $order->user->email,
+            'email' => $order->user->email ?? '',
             'phone' => $order->user->phone,
             'companyType' => 'individual',
             'actualAddress' => $order->zip.', '.$order->ship_address
@@ -97,14 +101,14 @@ class Service
             $sum += (int)$product["price"] * 100;
         }
         $agent = $service->getAgent($myWarehouse, $client_data['name']);
-        if (!count($agent['rows'])){
+        if (count($agent['rows']) === 0){
             $agent = $service->createAgent($myWarehouse, $client_data);
         }
         $contract = $service->createContract($myWarehouse, $agent, $order->id, $sum);
         $newOrder = $service->createOrder($myWarehouse, $agent, $order->id, $order_data, $status, $contract);
         $service->createDemand($myWarehouse, $agent, $order_data);
 
-        return isset($newOrder['id']) ? $order->id : false;
+        return $newOrder ?? false;
     }
 
     public function get_order_products(Order $order, $need_weight=true)

@@ -14,7 +14,7 @@ class ZipCheckRequest extends FormRequest
     public function rules()
     {
         return [
-            'Zip' => 'integer|required|injection|digits:6',
+            'Zip' => 'string|required|injection|digits:6',
         ];
     }
 }

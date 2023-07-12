@@ -52,6 +52,10 @@ Route::group(['middleware'=>['auth:sanctum', 'json']], function (){
         Route::get('/category/{user}', 'CompareController@category')->name('api.compares.category');
         Route::delete('/{user}', 'CompareController@destroy')->name('api.compares.destroy');
     });
+
+    Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
+        Route::post('/create', 'OrderController@create')->name('api.orders.create');
+    });
 });
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\Product', 'prefix' => 'products'], function (){
@@ -108,9 +112,8 @@ Route::get('promotion_images', function (){
 // TODO перекинуть в только для авторизированных пользователей
 Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
     Route::get('/{user}', 'OrderController@index')->name('api.orders.index');
-    Route::post('/create', 'OrderController@create')->name('api.orders.create');
+//    Route::post('/create', 'OrderController@create')->name('api.orders.create');
     Route::get('/zip_check', 'OrderController@zip_check')->name('api.orders.zip_check');
-//    Route::post('/', 'UserController@index')->name('api.users.index');
 });
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\Comment', 'prefix' => 'comments'], function (){

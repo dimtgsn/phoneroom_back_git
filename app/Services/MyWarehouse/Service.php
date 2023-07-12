@@ -436,9 +436,9 @@ class Service
                 "agent" => [
                     "meta" => $agent['rows'][0]['meta'] ?? $agent['meta']
                 ],
-                "state" => [
-                    "meta" => $status['meta'],
-                ],
+//                "state" => [
+//                    "meta" => $status['meta'],
+//                ],
                 "contract" => [
                     "meta" => $contract['meta'],
                 ],
@@ -533,5 +533,30 @@ class Service
             ->get('https://online.moysklad.ru/api/remap/1.2/entity/'.$entity.'/metadata');
 
         return json_decode($state->body(), JSON_UNESCAPED_UNICODE);
+    }
+    public function createExportFile($myWarehouse, $order_id){
+        $file = Http::withToken($myWarehouse->token)
+            ->withHeaders([
+                "Content-Type" => "application/json",
+            ])
+            ->post('https://online.moysklad.ru/api/remap/1.2/entity/customerorder/'.$order_id.'/export/', [
+                "template" => [
+                    "meta" => [
+                        "href" => "https://online.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/embeddedtemplate/6ffea5e5-1b69-4a88-be59-4856281d439c",
+                        "type" => "embeddedtemplate",
+                        "mediaType" => "application/json"
+                    ]
+                ],
+                "extension" => "pdf"
+            ]);
+
+        return $file->body();
+    }
+
+    public function getEmbeddedTemplate($myWarehouse){
+        $template = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/embeddedtemplate/');
+
+        return json_decode($template->body(), JSON_UNESCAPED_UNICODE);
     }
 }

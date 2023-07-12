@@ -11,8 +11,11 @@ use App\Models\Product;
 use App\Models\Profile;
 use App\Models\User;
 use App\Models\Variant;
+use App\Notifications\OrderToTelegram;
+use App\Notifications\Telegram;
 use App\Services\MyWarehouse\Service;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Request;
 
 class OrderController  extends Controller
@@ -64,12 +67,17 @@ class OrderController  extends Controller
 
     public function choose_delivery(Order $order, \App\Services\Order\Service $service){
 
-        $data = $service->get_order_products($order, false);
-        $products = $data['products'];
+        if($order->status_id === 5){
+            $data = $service->get_order_products($order, false);
+            $products = $data['products'];
 //        $products_weight = $data['products_weight'];
-        $delivery = '';
+            $delivery = '';
 //        $delivery = $this->get_delivery_costs($order, $products_weight, 1);
-        return view('admin.order.choose_delivery', compact('order', 'products', 'delivery'));
+            return view('admin.order.choose_delivery', compact('order', 'products', 'delivery'));
+        }
+        else{
+            return redirect(route('admin.order.index'));
+        }
     }
 
     public function parsel_create(Order $order, \App\Services\Order\Service $service, $delivery_id){
@@ -163,5 +171,29 @@ class OrderController  extends Controller
             return '';
         }
         return '';
+    }
+
+    public function export(\App\Services\MyWarehouse\Service $service){
+        $myWarehouse = MyWarehouse::select('token')->first();
+        $agent = $service->getAgent($myWarehouse, 'Гасанян Дмитрий');
+        $order_data = [
+            'ship_address' => '107664, адрес адрес адрес',
+            'positions' => [],
+        ];
+        $contract = $service->createContract($myWarehouse, $agent, 10, 22333);
+        $newOrder = $service->createOrder($myWarehouse, $agent, 10, $order_data, '', $contract);
+//        return $newOrder;
+        $file = $service->createExportFile($myWarehouse, $newOrder['id']);
+        ['uri' => $filepath] = stream_get_meta_data(tmpfile());
+        file_put_contents($filepath, $file);
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        $user = User::where('id', 1)->first();
+        $user->notify(new Telegram(Order::with('status')->where('id', 10)->first(), $filepath));
+//        dd(readfile($file));
+//        return $file;
+
+        //        return $service->getEmbeddedTemplate($myWarehouse);
     }
 }
