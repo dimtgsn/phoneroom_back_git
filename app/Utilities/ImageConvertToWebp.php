@@ -2,7 +2,6 @@
 
 namespace App\Utilities;
 
-use Illuminate\Support\Facades\Storage;
 use Imagick;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -17,11 +16,6 @@ class ImageConvertToWebp
         $name = pathinfo($source, PATHINFO_FILENAME);
         $destination = $dir . '/' . $name . '.webp';
         $destination_jpg = $dir . '/' . $name . '.jpeg';
-        if (str_contains($source, asset(''))){
-            // TODO изменить нижележащую строку на url с доменом
-            $destination_jpg = Storage::path(str_replace(asset('').'storage/', '', $destination_jpg));
-            $destination = Storage::path(str_replace(asset('').'storage/', '', $destination));
-        }
         $info = getimagesize($source);
         $isAlpha = false;
         $image_webp = false;

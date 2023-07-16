@@ -65,17 +65,8 @@ return [
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
-            'queue' => ['emails', 'telegrams'],
+            'queue' => env('REDIS_QUEUE', 'default'),
             'retry_after' => 90,
-            'block_for' => null,
-            'after_commit' => false,
-        ],
-
-        'redis-long-processes' => [
-            'driver' => 'redis',
-            'connection' => 'default',
-            'queue' => 'exports',
-            'retry_after' => 600,
             'block_for' => null,
             'after_commit' => false,
         ],

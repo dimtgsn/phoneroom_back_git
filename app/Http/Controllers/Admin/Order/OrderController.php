@@ -5,9 +5,6 @@ namespace App\Http\Controllers\Admin\Order;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MyWarehouse\ConnectRequest;
 use App\Http\Requests\MyWarehouse\ExportRequest;
-use App\Jobs\OrderExportJob;
-use App\Jobs\SendOrderEmailJob;
-use App\Jobs\SendTelegramNotificationJob;
 use App\Models\MyWarehouse;
 use App\Models\Order;
 use App\Models\Product;
@@ -17,7 +14,6 @@ use App\Models\Variant;
 use App\Notifications\OrderToTelegram;
 use App\Notifications\Telegram;
 use App\Services\MyWarehouse\Service;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Request;
@@ -179,26 +175,24 @@ class OrderController  extends Controller
 
     public function export(\App\Services\MyWarehouse\Service $service){
         $myWarehouse = MyWarehouse::select('token')->first();
-//        $agent = $service->getAgent($myWarehouse, 'Гасанян Дмитрий');
-//        $order_data = [
-//            'ship_address' => '107664, адрес адрес адрес',
-//            'positions' => [],
-//        ];
-//        $contract = $service->createContract($myWarehouse, $agent, 10, 22333);
-//        $newOrder = $service->createOrder($myWarehouse, $agent, 10, $order_data, '', $contract);
-////        return $newOrder;
-//        $file = $service->createExportFile($myWarehouse, $newOrder['id']);
-//        ['uri' => $filepath] = stream_get_meta_data(tmpfile());
-//        file_put_contents($filepath, $file);
-//        if (ob_get_level()) {
-//            ob_end_clean();
-//        }
-//        $user = User::where('id', 1)->first();
-//        $user->notify(new Telegram(Order::with('status')->where('id', 10)->first(), $filepath));
+        $agent = $service->getAgent($myWarehouse, 'Гасанян Дмитрий');
+        $order_data = [
+            'ship_address' => '107664, адрес адрес адрес',
+            'positions' => [],
+        ];
+        $contract = $service->createContract($myWarehouse, $agent, 10, 22333);
+        $newOrder = $service->createOrder($myWarehouse, $agent, 10, $order_data, '', $contract);
+//        return $newOrder;
+        $file = $service->createExportFile($myWarehouse, $newOrder['id']);
+        ['uri' => $filepath] = stream_get_meta_data(tmpfile());
+        file_put_contents($filepath, $file);
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        $user = User::where('id', 1)->first();
+        $user->notify(new Telegram(Order::with('status')->where('id', 10)->first(), $filepath));
 //        dd(readfile($file));
 //        return $file;
-        $new_order = Order::with('status')->where('id', 20)->first();
-        OrderExportJob::dispatch($new_order)->onConnection('redis-long-processes')->onQueue('exports');
 
         //        return $service->getEmbeddedTemplate($myWarehouse);
     }

@@ -6,15 +6,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
-        "ext-curl": "*",
-        "ext-gd": "*",
-        "ext-imagick": "*",
-        "ext-redis": "*",
         "guzzlehttp/guzzle": "^7.2",
         "http-interop/http-factory-guzzle": "^1.2",
         "laravel-notification-channels/telegram": "^3.0",
         "laravel/framework": "^9.19",
-        "laravel/horizon": "^5.18",
         "laravel/sanctum": "^3.0",
         "laravel/scout": "^9.8",
         "laravel/telescope": "^4.10",
@@ -24,7 +19,10 @@
         "livewire/livewire": "^2.11",
         "meilisearch/meilisearch-php": "^1.0",
         "movemoveapp/laravel-dadata": "^1.0",
-        "stevebauman/location": "^6.6"
+        "stevebauman/location": "^6.6",
+        "ext-imagick": "*",
+        "ext-gd": "*",
+        "ext-curl": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.7",

@@ -51,15 +51,15 @@ class Service
 
         if ($order){
             // TODO new code
-//            $new_order_id = $this->export_order($order, new \App\Services\MyWarehouse\Service);
-//             if($new_order !== false){
-//                 return [
-//                        'myWarehouseNewOrderId' => $new_order_id,
-//                        'order' => $order
-//                     ];
-//             }
-//             $order->delete();
-             return $order;
+            $new_order = $this->export_order($order, new \App\Services\MyWarehouse\Service);
+             if($new_order !== false){
+                 return [
+                        'myWarehouseNewOrderId' => $new_order['id'],
+                        'order' => $order
+                     ];
+             }
+             $order->delete();
+             return false;
         }
 
         return false;
@@ -108,7 +108,7 @@ class Service
         $newOrder = $service->createOrder($myWarehouse, $agent, $order->id, $order_data, $status, $contract);
         $service->createDemand($myWarehouse, $agent, $order_data);
 
-        return $newOrder['id'] ?? false;
+        return $newOrder ?? false;
     }
 
     public function get_order_products(Order $order, $need_weight=true)
