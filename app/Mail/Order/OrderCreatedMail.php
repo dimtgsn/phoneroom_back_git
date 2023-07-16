@@ -7,6 +7,7 @@ use App\Services\Order\Service;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -16,16 +17,17 @@ class OrderCreatedMail extends Mailable
     use Queueable, SerializesModels;
 
     protected $order;
+    protected $file;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct(Order $order)
+    public function __construct(Order $order, $file)
     {
-        //
         $this->order = $order;
+        $this->file = $file;
     }
 
     /**
@@ -64,6 +66,10 @@ class OrderCreatedMail extends Mailable
      */
     public function attachments()
     {
-        return [];
+        return [
+            Attachment::fromPath($this->file)
+                ->as('заказ-'.($this->order->id+1234).'.pdf')
+                ->withMime('application/pdf'),
+        ];
     }
 }

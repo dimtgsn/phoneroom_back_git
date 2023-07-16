@@ -9,6 +9,8 @@
 {{--                <div class="card-header text-lg">Подключение к аккаунту</div>--}}
                 <div class="card-body d-flex justify-content-between">
                     <div class="col-4">
+                        <h5>При экспорте каждый товар экспортируется в течении <span style="color: #E31235">3 минут</span></h5>
+                        <h6><span style="color: #E31235">*</span>Можно спокойно покинуть страницу, так как товары загружаются асинхронно(параллельно)</h6>
                         <a href="#" disabled class="w-100 mt-3 active btn btn-outline-dark">Экспорт товаров</a>
                         <hr>
 {{--                        <a href="#" disabled class="w-100 btn btn-outline-dark">Экспорт товаров</a>--}}

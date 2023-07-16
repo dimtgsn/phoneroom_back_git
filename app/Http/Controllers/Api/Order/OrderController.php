@@ -6,14 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\StoreRequest;
 use App\Http\Requests\Order\ZipCheckRequest;
 use App\Http\Resources\Order\OrderCollection;
+use App\Jobs\OrderExportJob;
+use App\Jobs\SendOrderEmailJob;
+use App\Jobs\SendTelegramNotificationJob;
 use App\Models\MyWarehouse;
 use App\Models\User;
 use App\Notifications\Telegram;
 use App\Services\Order\Service;
+use Illuminate\Support\Facades\Bus;
 
 class OrderController  extends Controller
 {
-    // TODO проверить уведомление в telegram
+    // TODO проверить очереди
     public function create(StoreRequest $request, Service $service, \App\Services\MyWarehouse\Service $service_myWarehouse){
         $data = $request->validated();
         if(!$this->zip_check($data['Zip'])){
@@ -24,17 +28,18 @@ class OrderController  extends Controller
             abort(500);
         }
         else{
-            $user = User::where('position_id', 3)->first();
-            $myWarehouse = MyWarehouse::select('token')->first();
-            $file = $service_myWarehouse->createExportFile($myWarehouse, $new_order['myWarehouseNewOrderId']);
-            ['uri' => $filepath] = stream_get_meta_data(tmpfile());
-            file_put_contents($filepath, $file);
-            if (ob_get_level()) {
-                ob_end_clean();
-            }
-            $user->notify(new Telegram($new_order['order'], $filepath));
+            OrderExportJob::dispatch($new_order)->onConnection('redis-long-processes')->onQueue('exports');
+//            $user = User::where('position_id', 3)->first();
+//            $myWarehouse = MyWarehouse::select('token')->first();
+//            $file = $service_myWarehouse->createExportFile($myWarehouse, $new_order['myWarehouseNewOrderId']);
+//            ['uri' => $filepath] = stream_get_meta_data(tmpfile());
+//            file_put_contents($filepath, $file);
+//            if (ob_get_level()) {
+//                ob_end_clean();
+//            }
+//            $user->notify(new Telegram($new_order['order'], $filepath));
         }
-        return (int)$new_order['order']->id;
+        return (int)$new_order->id;
     }
 
     public function zip_check($zip){

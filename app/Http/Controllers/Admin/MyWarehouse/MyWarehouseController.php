@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\MyWarehouse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MyWarehouse\ConnectRequest;
 use App\Http\Requests\MyWarehouse\ExportRequest;
+use App\Jobs\ProductExportJob;
 use App\Models\MyWarehouse;
 use App\Models\Product;
 use App\Services\MyWarehouse\Service;
@@ -41,8 +42,10 @@ class MyWarehouseController  extends Controller
 
     public function export(ExportRequest $request, Service $service){
         $data = $request->validated();
-        $response = $service->export($data);
-        dump($response);
+        foreach ($data['ids'] as $id => $value){
+            $data['ids'] = [$id => $value,];
+            ProductExportJob::dispatch($data)->onConnection('redis-long-processes')->onQueue('exports');
+        }
         return redirect()->route('admin.my-warehouse.main');
     }
 
