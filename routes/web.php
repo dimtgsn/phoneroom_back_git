@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Notifications\Telegram;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 
 // TODO php imagick
 //Route::get('/admin/login/Erw12sd', function () {
@@ -161,6 +163,14 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin\Order', 'prefix' => 'o
 // TODO сделать отправку уведомлений на почту о создании заказа и поместить в очередь
 Route::get('/email_test', function (){
     $order = Order::with('status')->first();
-    Mail::to('gasanyandmitry@yandex.ru')->send(new OrderCreatedMail($order));
+//    Mail::to('gasanyandmitry@yandex.ru')->send(new OrderCreatedMail($order));
+//    $str = Str::random(5000000);
+//    if (!Redis::get('str1')){
+//        Redis::set('str1', $str);
+//        return $str;
+//    }
+//    \App\Jobs\SendOrderEmailJob::dispatch($order)->onQueue('emails');
+//    \App\Jobs\SendTelegramNotificationJob::dispatch($order)->onQueue('telegrams');
+//    return Redis::get('str1');
 });
 

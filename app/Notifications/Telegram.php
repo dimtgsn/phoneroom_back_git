@@ -61,7 +61,7 @@ class Telegram extends Notification
                         "---------------------------------\n".
                         "*Пользователь:*\n".
                         $user->first_name.' '.($user->profile->middle_name ?? '').($user->profile->last_name ?? '')."\n".
-                        "Номер телефона - +".$user->phone.
+                        "Номер телефона - +".$user->phone."\n".
                         "---------------------------------\n".
                         "*Заказ:*\n".
                         "*Дата создания заказа* - ".DateFormatting::format($this->newOrder->created_at)."\n".
@@ -69,7 +69,7 @@ class Telegram extends Notification
                         "*Общая сумма заказа* - ".$this->newOrder->total." ₽"."\n".
                         "*Адрес доставки* - ".$this->newOrder->ship_address.", ".$this->newOrder->zip
                 )
-                ->document($this->file, 'заказ.pdf')
+                ->document($this->file, 'заказ-'.$this->newOrder->id.'.pdf')
                 ->button('Выбрать доставку', 'https://google.com');
     }
 

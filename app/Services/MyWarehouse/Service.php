@@ -13,9 +13,12 @@ use App\Utilities\ImageConvertToBase64;
 use App\Utilities\ImageConvertToWebp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Backtrace\Arguments\Reducers\ArrayArgumentReducer;
 
 class Service
 {
+    protected $organization = [];
+    protected $warehouse = [];
 
     public function connect($data)
     {
@@ -47,7 +50,7 @@ class Service
 
     public function export($data){
         $myWarehouse = MyWarehouse::select('token')->first();
-        set_time_limit(1200);
+//        set_time_limit(0);
         foreach ($data['ids'] as $id => $value){
             $product = Product::where('id', $id)->first();
             if ($product->exported === true){
@@ -56,7 +59,7 @@ class Service
             $productImages = [
                 [
                     "filename" => $product->slug.'.jpeg',
-                    "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($product->image)),
+                    "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert(asset($product->image)))
                 ]
             ];
             $images_without_variants = Image::where('product_id', $product->id)->where('variant_id', null)->get();
@@ -65,7 +68,7 @@ class Service
                     if($img->path){
                         $productImages[] = [
                             "filename" => $product->slug.'-thumb-image-'.$img->position.'.jpeg',
-                            "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($img->path)),
+                            "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert(asset($img->path))),
                         ];
                     }
                 }
@@ -73,9 +76,10 @@ class Service
             $product_price = $product->price * 100;
             $group = null;
             $groupParent = null;
-            if (empty($this->getGroups($myWarehouse)["rows"]) !== true){
+            $getGroupsValue = $this->getGroups($myWarehouse);
+            if (empty($getGroupsValue["rows"]) !== true){
 
-                foreach ($this->getGroups($myWarehouse)['rows'] as $row){
+                foreach ($getGroupsValue['rows'] as $row){
                     foreach ($row as $key => $val) {
                         if ($key === "name" && $val === $product->category->name){
                             $group = $row;
@@ -138,7 +142,10 @@ class Service
                     ]);
                 }
             }
-            $newProduct = $this->createProduct($myWarehouse, $product, $productImages, $group, $product_price);
+            $getPriceTypeValue = $this->getPriceType($myWarehouse);
+            $this->organization = $this->getOrganization($myWarehouse);
+            $this->warehouse = $this->getWarehouse($myWarehouse);
+            $newProduct = $this->createProduct($myWarehouse, $product, $productImages, $group, $product_price, $getPriceTypeValue);
             $product->update([
                 'my_warehouse_id' => $newProduct['id']
             ]);
@@ -177,7 +184,7 @@ class Service
                     $variantImages = [
                         [
                             "filename" => $product->slug.'.jpeg',
-                            "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($variant['image'])),
+                            "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert(asset($variant['image']))),
                         ]
                     ];
                     $images_with_variants = Image::where('product_id', $product->id)->where('variant_id', (int)$variant['id'])->get();
@@ -186,12 +193,12 @@ class Service
                             if ($img->path){
                                 $variantImages[] = [
                                     "filename" => $variant['slug'].'-thumb-image-'.$img->position.'.jpeg',
-                                    "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert($img->path)),
+                                    "content" => ImageConvertToBase64::convert(ImageConvertToWebp::convert(asset($img->path))),
                                 ];
                             }
                         }
                     }
-                    $newProductVariant = $this->createProductVariant($myWarehouse, $product, $variant, $variantImages, $characteristics, $newProduct);
+                    $newProductVariant = $this->createProductVariant($myWarehouse, $product, $variant, $variantImages, $characteristics, $newProduct, $getPriceTypeValue);
                     $variant['my_warehouse_id'] = $newProductVariant['id'];
                     $variants_edit[$i]->update([
                         'variants_json' => json_encode($variant, JSON_UNESCAPED_UNICODE),
@@ -227,86 +234,235 @@ class Service
         return true;
     }
 
-    public function getOrganization($myWarehouse){
-        $org = Http::withToken($myWarehouse->token)
-            ->get('https://online.moysklad.ru/api/remap/1.2/entity/organization');
+    public function getCurlOptArray($url, $method, $myWarehouse, $data='{}'){
+        return array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 500,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_POSTFIELDS => $data,
+            CURLOPT_HEADER => false,
+            CURLOPT_HTTPHEADER => array(
+                "Content-Type: application/json",
+                "Authorization: Bearer ".$myWarehouse->token,
+            ),
+        );
+    }
 
-        return json_decode($org->body(), JSON_UNESCAPED_UNICODE);
+    public function getOrganization($myWarehouse){
+//        $org = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->get('https://online.moysklad.ru/api/remap/1.2/entity/organization');
+//        return json_decode($org->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/organization',
+            'GET',
+            $myWarehouse
+        ));
+        $org = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($org, JSON_UNESCAPED_UNICODE);
     }
 
     public function getWarehouse($myWarehouse){
-        $warehouse = Http::withToken($myWarehouse->token)
-            ->get('https://online.moysklad.ru/api/remap/1.2/entity/store');
-        if (empty(json_decode($warehouse->body(), JSON_UNESCAPED_UNICODE)["rows"]) === true){
-            $warehouse = Http::withToken($myWarehouse->token)
-                ->withHeaders([
-                    "Content-Type" => "application/json"
-                ])
-                ->post('https://online.moysklad.ru/api/remap/1.2/entity/store', [
-                    "name" => "Основной склад",
-                ]);
-        }
+//        $warehouse = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->get('https://online.moysklad.ru/api/remap/1.2/entity/store');
+//        if (empty(json_decode($warehouse->body(), JSON_UNESCAPED_UNICODE)["rows"]) === true){
+//            $warehouse = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//                ->withHeaders([
+//                    "Content-Type" => "application/json"
+//                ])
+//                ->post('https://online.moysklad.ru/api/remap/1.2/entity/store', [
+//                    "name" => "Основной склад",
+//                ]);
+//        }
+//
+//        return json_decode($warehouse->body(), JSON_UNESCAPED_UNICODE);
 
-        return json_decode($warehouse->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/store',
+            'GET',
+            $myWarehouse
+        ));
+        $warehouse = curl_exec($curl);
+        curl_close($curl);
+        if (empty(json_decode($warehouse, JSON_UNESCAPED_UNICODE)["rows"]) === true){
+            $curl = curl_init();
+            curl_setopt_array($curl, $this->getCurlOptArray(
+                'https://online.moysklad.ru/api/remap/1.2/entity/store',
+                'POST',
+                $myWarehouse,
+                json_encode([
+                    "name" => "Основной склад",
+                ], true)
+            ));
+            $warehouse = curl_exec($curl);
+            curl_close($curl);
+        }
+        return json_decode($warehouse, JSON_UNESCAPED_UNICODE);
     }
 
     public function getGroups($myWarehouse){
-        $groups = Http::withToken($myWarehouse->token)
-            ->get('https://online.moysklad.ru/api/remap/1.2/entity/productfolder');
+//        $groups = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->get('https://online.moysklad.ru/api/remap/1.2/entity/productfolder');
+//
+//        return json_decode($groups->body(), JSON_UNESCAPED_UNICODE);
 
-        return json_decode($groups->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/productfolder',
+            'GET',
+            $myWarehouse
+        ));
+        $groups = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($groups, JSON_UNESCAPED_UNICODE);
     }
 
     public function createGroup($myWarehouse, $categoryName, $groupParent=null){
+//        if($groupParent === null){
+//            $group = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//                ->withHeaders([
+//                    "Content-Type" => "application/json"
+//                ])
+//                ->post('https://online.moysklad.ru/api/remap/1.2/entity/productfolder', [
+//                    "name" => $categoryName,
+//                ]);
+//        }
+//        else{
+//            $group = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//                ->withHeaders([
+//                    "Content-Type" => "application/json"
+//                ])
+//                ->post('https://online.moysklad.ru/api/remap/1.2/entity/productfolder', [
+//                    "name" => $categoryName,
+//                    "productFolder" => [
+//                        'meta' => $groupParent['meta'],
+//                    ],
+//                ]);
+//        }
+//        return json_decode($group->body(), JSON_UNESCAPED_UNICODE);
         if($groupParent === null){
-            $group = Http::withToken($myWarehouse->token)
-                ->withHeaders([
-                    "Content-Type" => "application/json"
-                ])
-                ->post('https://online.moysklad.ru/api/remap/1.2/entity/productfolder', [
+            $curl = curl_init();
+            curl_setopt_array($curl, $this->getCurlOptArray(
+                'https://online.moysklad.ru/api/remap/1.2/entity/productfolder',
+                'POST',
+                $myWarehouse,
+                json_encode([
                     "name" => $categoryName,
-                ]);
+                ], true)
+            ));
+            $group = curl_exec($curl);
+            curl_close($curl);
         }
         else{
-            $group = Http::withToken($myWarehouse->token)
-                ->withHeaders([
-                    "Content-Type" => "application/json"
-                ])
-                ->post('https://online.moysklad.ru/api/remap/1.2/entity/productfolder', [
+            $curl = curl_init();
+            curl_setopt_array($curl, $this->getCurlOptArray(
+                'https://online.moysklad.ru/api/remap/1.2/entity/productfolder',
+                'POST',
+                $myWarehouse,
+                json_encode([
                     "name" => $categoryName,
                     "productFolder" => [
                         'meta' => $groupParent['meta'],
                     ],
-                ]);
+                ], true)
+            ));
+            $group = curl_exec($curl);
+            curl_close($curl);
         }
-        return json_decode($group->body(), JSON_UNESCAPED_UNICODE);
+
+        return json_decode($group, JSON_UNESCAPED_UNICODE);
     }
 
     public function createParentGroup($myWarehouse, $categoryParentName){
-        $groupParent = Http::withToken($myWarehouse->token)
-            ->withHeaders([
-                "Content-Type" => "application/json"
-            ])
-            ->post('https://online.moysklad.ru/api/remap/1.2/entity/productfolder', [
-                "name" => $categoryParentName,
-            ]);
+//        $groupParent = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->withHeaders([
+//                "Content-Type" => "application/json"
+//            ])
+//            ->post('https://online.moysklad.ru/api/remap/1.2/entity/productfolder', [
+//                "name" => $categoryParentName,
+//            ]);
 
-        return json_decode($groupParent->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/productfolder',
+            'POST',
+            $myWarehouse,
+            json_encode(
+                [
+                    "name" => $categoryParentName
+                ], true),
+        ));
+        $groupParent = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($groupParent, JSON_UNESCAPED_UNICODE);
     }
 
     public function getPriceType($myWarehouse){
-        $priceType = Http::withToken($myWarehouse->token)
-            ->get('https://online.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/default');
+//        $priceType = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->get('https://online.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/default');
+//
+//        return json_decode($priceType->body(), JSON_UNESCAPED_UNICODE);
 
-        return json_decode($priceType->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/default',
+            'GET',
+            $myWarehouse,
+        ));
+        $priceType = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($priceType, JSON_UNESCAPED_UNICODE);
     }
 
-    public function createProduct($myWarehouse, $product, $productImages, $group, $product_price){
-        $newProduct = Http::withToken($myWarehouse->token)
-            ->withHeaders([
-                "Content-Type" => "application/json"
-            ])
-            ->post('https://online.moysklad.ru/api/remap/1.2/entity/product', [
+    public function createProduct($myWarehouse, $product, $productImages, $group, $product_price, $getPriceTypeValue){
+//        $newProduct = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->withHeaders([
+//                "Content-Type" => "application/json"
+//            ])
+//            ->post('https://online.moysklad.ru/api/remap/1.2/entity/product', [
+//                "name" => $product->name,
+//                "code" => (string)$product->id,
+//                "article" => (string)$product->sku,
+//                "vat" => $product->vat === -1 ? 0:$product->vat,
+//                "vatEnabled" => !($product->vat === -1),
+//                "productFolder" => [
+//                    "meta" =>  $group['meta'],
+//                ],
+//                "description" => $product->description,
+//                "salePrices" => [
+//                    [
+//                        'value' => $product_price,
+//                        "priceType" => [
+//                            "meta" => $getPriceTypeValue['meta'],
+//                        ],
+//                    ],
+//                ],
+//                "uom" => [
+//                    'meta' => $this->getUom($myWarehouse)['rows'][0]['meta'],
+//                ],
+//                "minPrice" => [
+//                    "value" => $product->min_price * 100,
+//                ],
+//                "buyPrice" => [
+//                    "value" => $product->purchase_price * 100,
+//                ],
+//                'minimumBalance' => $product->min_balance,
+//                "images" => $productImages,
+//            ]);
+
+//        return json_decode($newProduct->body(), JSON_UNESCAPED_UNICODE);
+
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/product',
+            'POST',
+            $myWarehouse,
+            json_encode([
                 "name" => $product->name,
                 "code" => (string)$product->id,
                 "article" => (string)$product->sku,
@@ -320,7 +476,7 @@ class Service
                     [
                         'value' => $product_price,
                         "priceType" => [
-                            "meta" => $this->getPriceType($myWarehouse)['meta'],
+                            "meta" => $getPriceTypeValue['meta'],
                         ],
                     ],
                 ],
@@ -335,17 +491,55 @@ class Service
                 ],
                 'minimumBalance' => $product->min_balance,
                 "images" => $productImages,
-            ]);
-
-        return json_decode($newProduct->body(), JSON_UNESCAPED_UNICODE);
+            ], true)
+        ));
+        $newProduct = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($newProduct, JSON_UNESCAPED_UNICODE);
     }
 
-    public function createProductVariant($myWarehouse, $product, $variant, $variantImages, $characteristics, $newProduct){
-        $newProductVariant = Http::withToken($myWarehouse->token)
-            ->withHeaders([
-                "Content-Type" => "application/json"
-            ])
-            ->post('https://online.moysklad.ru/api/remap/1.2/entity/variant', [
+    public function createProductVariant($myWarehouse, $product, $variant, $variantImages, $characteristics, $newProduct, $getPriceTypeValue){
+//        $newProductVariant = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->withHeaders([
+//                "Content-Type" => "application/json"
+//            ])
+//            ->post('https://online.moysklad.ru/api/remap/1.2/entity/variant', [
+//                "name" => $variant['name'],
+//                'characteristics' => $characteristics,
+//                "code" => (string)$variant['id'],
+//                "article" => $variant['sku'],
+//                "vat" => $product->vat === -1 ? 0:$product->vat,
+//                "vatEnabled" => !($product->vat === -1),
+//                "description" => $variant['description'],
+//                "salePrices" => [
+//                    [
+//                        'value' => $variant['price'] * 100,
+//                        "priceType" => [
+//                            "meta" => $getPriceTypeValue['meta'],
+//                        ],
+//                    ],
+//                ],
+//                "minPrice" => [
+//                    "value" => $variant['min_price'] * 100,
+//                ],
+//                "buyPrice" => [
+//                    "value" => $variant['purchase_price'] * 100,
+//                ],
+//                'minimumBalance' => $variant['min_balance'],
+//                "product" => [
+//                    "meta" => $newProduct['meta'],
+//                ],
+//                "images" => $variantImages,
+//            ]);
+
+//        return json_decode($newProductVariant->body(), JSON_UNESCAPED_UNICODE);
+
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/variant',
+            'POST',
+            $myWarehouse,
+            json_encode([
                 "name" => $variant['name'],
                 'characteristics' => $characteristics,
                 "code" => (string)$variant['id'],
@@ -357,7 +551,7 @@ class Service
                     [
                         'value' => $variant['price'] * 100,
                         "priceType" => [
-                            "meta" => $this->getPriceType($myWarehouse)['meta'],
+                            "meta" => $getPriceTypeValue['meta'],
                         ],
                     ],
                 ],
@@ -372,43 +566,95 @@ class Service
                     "meta" => $newProduct['meta'],
                 ],
                 "images" => $variantImages,
-            ]);
-
-        return json_decode($newProductVariant->body(), JSON_UNESCAPED_UNICODE);
+            ]), true)
+        );
+        $newProductVariant = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($newProductVariant, JSON_UNESCAPED_UNICODE);
     }
 
     public function getCharacteristics($myWarehouse){
-        $characteristics = Http::withToken($myWarehouse->token)
-            ->get("https://online.moysklad.ru/api/remap/1.2/entity/variant/metadata");
+//        $characteristics = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->get("https://online.moysklad.ru/api/remap/1.2/entity/variant/metadata");
+//
+//        return json_decode($characteristics->body(), JSON_UNESCAPED_UNICODE);
 
-        return json_decode($characteristics->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            "https://online.moysklad.ru/api/remap/1.2/entity/variant/metadata",
+            'GET',
+            $myWarehouse,
+        ));
+        $characteristics = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($characteristics, JSON_UNESCAPED_UNICODE);
     }
 
     public function createCharacteristic($myWarehouse, $optionName){
-        $characteristic = Http::withToken($myWarehouse->token)
-            ->withHeaders([
-                "Content-Type" => "application/json"
-            ])
-            ->post("https://online.moysklad.ru/api/remap/1.2/entity/variant/metadata/characteristics", [
-                "name" => $optionName,
-            ]);
+//        $characteristic = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->withHeaders([
+//                "Content-Type" => "application/json"
+//            ])
+//            ->post("https://online.moysklad.ru/api/remap/1.2/entity/variant/metadata/characteristics", [
+//                "name" => $optionName,
+//            ]);
+//
+//        return json_decode($characteristic->body(), JSON_UNESCAPED_UNICODE);
 
-        return json_decode($characteristic->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            "https://online.moysklad.ru/api/remap/1.2/entity/variant/metadata/characteristics",
+            'POST',
+            $myWarehouse,
+            json_encode([
+                "name" => $optionName,
+            ], true)
+        ));
+        $characteristic = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($characteristic, JSON_UNESCAPED_UNICODE);
     }
 
     public function createEnter($myWarehouse, $productOrVariant, $productOrVariantPrice, $newProductOrVariant){
-        $enter = Http::withToken($myWarehouse->token)
-            ->withHeaders([
-                "Content-Type" => "application/json"
-            ])
-            ->post('https://online.moysklad.ru/api/remap/1.2/entity/enter', [
+//        $enter = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->withHeaders([
+//                "Content-Type" => "application/json"
+//            ])
+//            ->post('https://online.moysklad.ru/api/remap/1.2/entity/enter', [
+//                "name" => "enter".$productOrVariant['id'] ?? "enter".$productOrVariant->id,
+//                "organization" => [
+//                    "meta" => $this->organization['rows'][0]['meta']
+//                ],
+//                "store" => [
+//                    "meta" => $this->warehouse['rows'][0]['meta'] ??
+//                        $this->warehouse['meta']
+//                ],
+//                "positions" => [
+//                    [
+//                        "quantity" => (float)$productOrVariant['units_in_stock'] ?? $productOrVariant->units_in_stock,
+//                        "price" => $productOrVariantPrice,
+//                        "assortment" => [
+//                            "meta" => $newProductOrVariant['meta']
+//                        ]
+//                    ]
+//                ],
+//            ]);
+//
+//        return json_decode($enter->body(), JSON_UNESCAPED_UNICODE);
+
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/enter',
+            'POST',
+            $myWarehouse,
+            json_encode([
                 "name" => "enter".$productOrVariant['id'] ?? "enter".$productOrVariant->id,
                 "organization" => [
-                    "meta" => $this->getOrganization($myWarehouse)['rows'][0]['meta']
+                    "meta" => $this->organization['rows'][0]['meta']
                 ],
                 "store" => [
-                    "meta" => $this->getWarehouse($myWarehouse)['rows'][0]['meta'] ??
-                        $this->getWarehouse($myWarehouse)['meta']
+                    "meta" => $this->warehouse['rows'][0]['meta'] ??
+                        $this->warehouse['meta']
                 ],
                 "positions" => [
                     [
@@ -419,13 +665,15 @@ class Service
                         ]
                     ]
                 ],
-            ]);
-
-        return json_decode($enter->body(), JSON_UNESCAPED_UNICODE);
+            ], true)
+        ));
+        $enter = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($enter, JSON_UNESCAPED_UNICODE);
     }
 
     public function createOrder($myWarehouse, $agent, $code, $order, $status, $contract){
-        $order = Http::withToken($myWarehouse->token)
+        $order = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->withHeaders([
                 "Content-Type" => "application/json"
             ])
@@ -455,21 +703,21 @@ class Service
     }
 
     public function getAgent($myWarehouse, $agentName){
-        $agent = Http::withToken($myWarehouse->token)
+        $agent = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->get('https://online.moysklad.ru/api/remap/1.2/entity/counterparty/?search='.$agentName);
 
         return json_decode($agent->body(), JSON_UNESCAPED_UNICODE);
     }
 
     public function getProductOrVariant($myWarehouse, $type, $productOrVariantId){
-        $productOrVariant = Http::withToken($myWarehouse->token)
+        $productOrVariant = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->get('https://online.moysklad.ru/api/remap/1.2/entity/'.$type.'/'.$productOrVariantId);
 
         return json_decode($productOrVariant->body(), JSON_UNESCAPED_UNICODE);
     }
 
     public function createAgent($myWarehouse, $agentData){
-        $agent = Http::withToken($myWarehouse->token)
+        $agent = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->withHeaders([
                 "Content-Type" => "application/json"
             ])
@@ -479,7 +727,7 @@ class Service
     }
 
     public function createDemand($myWarehouse, $agent, $order){
-        $demand = Http::withToken($myWarehouse->token)
+        $demand = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->withHeaders([
                 "Content-Type" => "application/json"
             ])
@@ -502,7 +750,7 @@ class Service
     }
 
     public function createContract($myWarehouse, $agent, $code, $sum){
-        $contract = Http::withToken($myWarehouse->token)
+        $contract = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->withHeaders([
                 "Content-Type" => "application/json"
             ])
@@ -522,20 +770,30 @@ class Service
     }
 
     public function getUom($myWarehouse){
-        $uom = Http::withToken($myWarehouse->token)
-            ->get('https://online.moysklad.ru/api/remap/1.2/entity/uom/?search=Штука');
+//        $uom = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
+//            ->get('https://online.moysklad.ru/api/remap/1.2/entity/uom/?search=Штука');
+//
+//        return json_decode($uom->body(), JSON_UNESCAPED_UNICODE);
 
-        return json_decode($uom->body(), JSON_UNESCAPED_UNICODE);
+        $curl = curl_init();
+        curl_setopt_array($curl, $this->getCurlOptArray(
+            'https://online.moysklad.ru/api/remap/1.2/entity/uom/?search=%D0%A8%D1%82%D1%83%D0%BA%D0%B0',
+            'GET',
+            $myWarehouse,
+        ));
+        $uom = curl_exec($curl);
+        curl_close($curl);
+        return json_decode($uom, JSON_UNESCAPED_UNICODE);
     }
 
     public function getEntityStates($myWarehouse, $entity){
-        $state = Http::withToken($myWarehouse->token)
+        $state = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->get('https://online.moysklad.ru/api/remap/1.2/entity/'.$entity.'/metadata');
 
         return json_decode($state->body(), JSON_UNESCAPED_UNICODE);
     }
     public function createExportFile($myWarehouse, $order_id){
-        $file = Http::withToken($myWarehouse->token)
+        $file = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->withHeaders([
                 "Content-Type" => "application/json",
             ])
@@ -554,7 +812,7 @@ class Service
     }
 
     public function getEmbeddedTemplate($myWarehouse){
-        $template = Http::withToken($myWarehouse->token)
+        $template = Http::withOptions(['connect_timeout' => 180, 'read_timeout'  =>  180])->withToken($myWarehouse->token)
             ->get('https://online.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/embeddedtemplate/');
 
         return json_decode($template->body(), JSON_UNESCAPED_UNICODE);
