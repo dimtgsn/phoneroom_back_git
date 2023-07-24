@@ -9,8 +9,9 @@ use App\Jobs\ProductExportJob;
 use App\Models\MyWarehouse;
 use App\Models\Product;
 use App\Services\MyWarehouse\Service;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Request;
+use Illuminate\Support\Facades\Log;
 
 class MyWarehouseController  extends Controller
 {
@@ -49,19 +50,38 @@ class MyWarehouseController  extends Controller
         return redirect()->route('admin.my-warehouse.main');
     }
 
-    public function webhook(Request $request){
+    public function webhooks(Request $request, Service $service){
+        $data = $request->validate([
+            "auditContext" => ['required'],
+            "events" => ['required'],
+            "requestId" => ['required', 'string'],
+        ]);
+
+        if (count($data['events']) > 1){
+            foreach ($data['events'] as $event) {
+                $entity = $event['meta']['type'];
+                $action = $event['action'];
+                $updated_fields = $event['updatedFields'] ?? [];
+                $my_warehouse_id = substr($event['meta']['href'], -36, 36);
+                $service->import($entity, $action, $my_warehouse_id, $updated_fields);
+            }
+        }
+        else{
+            $entity = $data['events'][0]['meta']['type'];
+            $action = $data['events'][0]['action'];
+            $updated_fields = $data['events'][0]['updatedFields'] ?? [];
+            $my_warehouse_id = substr($data['events'][0]['meta']['href'], -36, 36);
+            $service->import($entity, $action, $my_warehouse_id, $updated_fields);
+        }
+
+
+//        Log::info(json_encode([
+//            'entity' => $entity,
+//            'action' => $action,
+//            'my_warehouse_id' => $my_warehouse_id,
+//        ], JSON_UNESCAPED_UNICODE));
+
 //        $myWarehouse = MyWarehouse::select('token')->first();
-        //        $responseWebhook = Http::withToken($myWarehouse->token)
-//            ->withHeaders([
-//                "Content-Type" => "application/json"
-//            ])
-//            ->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
-//                "url" => env("APP_URL").'/admin'.'/my-warehouse'.'/webhook',
-//                "action" => "CREATE",
-//                "entityType" => "product",
-//            ]);
-//        dd($responseWebhook->body());
-        dd($request);
     }
 
 

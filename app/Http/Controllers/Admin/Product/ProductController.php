@@ -122,19 +122,24 @@ class ProductController extends Controller
 
         if ($product->my_warehouse_id){
             $myWarehouse = MyWarehouse::select('token')->first();
-            if ($product->enter){
-                if ($product->option){
-                    $enters = Enter::where('product_id', $product->id)->get();
-                    foreach ($enters as $enter){
-                        Http::withToken($myWarehouse->token)
-                            ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$enter->enter_id);
-                    }
-                }
-                else{
+            if (count($product->enters)){
+                foreach ($product->enters as $enter){
+                    $enter->delete();
                     Http::withToken($myWarehouse->token)
-                        ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$product->enter->enter_id);
+                        ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$enter->enter_id);
                 }
-                $product->enter->delete();
+//                if ($product->option){
+//                    $enters = Enter::where('product_id', $product->id)->get();
+//                    foreach ($enters as $enter){
+//                        Http::withToken($myWarehouse->token)
+//                            ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$enter->enter_id);
+//                    }
+//                }
+//                else{
+//                    Http::withToken($myWarehouse->token)
+//                        ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$product->enter->enter_id);
+//                }
+//                $product->enter->delete();
             }
 
             Http::withToken($myWarehouse->token)
@@ -165,17 +170,19 @@ class ProductController extends Controller
         foreach ($product->variants as $variants){
             if (json_decode($variants->variants_json, true)['slug'] === $variant_slug){
 
-                if ($product->my_warehouse_id){
+                if ($variants->my_warehouse_id){
                     $myWarehouse = MyWarehouse::select('token')->first();
-                    $enter = Enter::where('product_id', $product->id)->where('variant_id', json_decode($variants->variants_json, true)['id'])->first();
-                    if ($enter){
-                        Http::withToken($myWarehouse->token)
-                            ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$enter->enter_id);
-                        $enter->delete();
+                    $enters = Enter::where('product_id', $product->id)->where('variant_id', $variants->id)->first();
+                    if ($enters){
+                        foreach ($enters as $enter){
+                            Http::withToken($myWarehouse->token)
+                                ->delete('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$enter->enter_id);
+                            $enter->delete();
+                        }
                     }
 
                     Http::withToken($myWarehouse->token)
-                        ->delete('https://online.moysklad.ru/api/remap/1.2/entity/variant/'.json_decode($variants->variants_json, true)['my_warehouse_id']);
+                        ->delete('https://online.moysklad.ru/api/remap/1.2/entity/variant/'.$variants->my_warehouse_id);
                 }
 
                 if(json_decode($variants->variants_json, true)['image']){

@@ -50,7 +50,7 @@ class Category extends Model
         'slug',
         'id',
         'name',
-    'my_warehouse_id',
+        'my_warehouse_id',
         'image',
         'parent_id',
         'brands'

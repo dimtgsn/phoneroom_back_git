@@ -4,10 +4,13 @@ use App\Mail\Order\OrderCreatedMail;
 use App\Models\MyWarehouse;
 use App\Models\Order;
 use App\Notifications\Telegram;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
 // TODO php imagick
 //Route::get('/admin/login/Erw12sd', function () {
@@ -138,7 +141,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
         Route::get('/edit', 'MyWarehouseController@edit')->name('admin.my-warehouse.edit');
         Route::post('/connect', 'MyWarehouseController@connect')->name('admin.my-warehouse.connect');
         Route::post('/export', 'MyWarehouseController@export')->name('admin.my-warehouse.export');
-        Route::post('/webhook', 'MyWarehouseController@webhook')->name('admin.my-warehouse.webhook');
         Route::patch('/{myWarehouse}', 'MyWarehouseController@update')->name('admin.my-warehouse.update');
     });
 
@@ -160,7 +162,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin', 'prefix' => 'admin',
 Route::group(['namespace' => '\App\Http\Controllers\Admin\Order', 'prefix' => 'orders'], function (){
     Route::get('/export', 'OrderController@export');
 });
-// TODO сделать отправку уведомлений на почту о создании заказа и поместить в очередь
+
 Route::get('/email_test', function (){
     $order = Order::with('status')->first();
 //    Mail::to('gasanyandmitry@yandex.ru')->send(new OrderCreatedMail($order));
@@ -174,3 +176,129 @@ Route::get('/email_test', function (){
 //    return Redis::get('str1');
 });
 
+Route::get('/create_webhooks', function (){
+    $myWarehouse = MyWarehouse::select('token')->first();
+    $responses = Http::pool(fn (Pool $pool) => [
+        // product
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "CREATE",
+            "entityType" => "product"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "UPDATE",
+            "entityType" => "product",
+            "diffType" => "FIELDS"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "DELETE",
+            "entityType" => "product"
+        ]),
+
+        // productfolder (category)
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "CREATE",
+            "entityType" => "productfolder"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "UPDATE",
+            "entityType" => "productfolder",
+            "diffType" => "FIELDS"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "DELETE",
+            "entityType" => "productfolder"
+        ]),
+
+        // variant
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "CREATE",
+            "entityType" => "variant"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "UPDATE",
+            "entityType" => "variant",
+            "diffType" => "FIELDS"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "DELETE",
+            "entityType" => "variant"
+        ]),
+
+        // customerorder
+//        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+//            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+//            "action" => "CREATE",
+//            "entityType" => "customerorder"
+//        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "UPDATE",
+            "entityType" => "customerorder",
+            "diffType" => "FIELDS"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "DELETE",
+            "entityType" => "customerorder"
+        ]),
+
+        // enter
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "CREATE",
+            "entityType" => "enter"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "UPDATE",
+            "entityType" => "enter",
+            "diffType" => "FIELDS"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "DELETE",
+            "entityType" => "enter"
+        ]),
+
+        // loss
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "CREATE",
+            "entityType" => "loss"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "UPDATE",
+            "entityType" => "loss",
+            "diffType" => "FIELDS"
+        ]),
+        $pool->withToken('c4b5ad663c8e215b70f78f64d3b6b9ba7e00512a')->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+            "action" => "DELETE",
+            "entityType" => "loss"
+        ]),
+    ]);
+//    return $responses[0]->body();
+//    Http::withToken($myWarehouse->token)
+//        ->withHeaders([
+//            "Content-Type" => "application/json"
+//        ])
+//        ->post('https://online.moysklad.ru/api/remap/1.2/entity/webhook', [
+//            "url" => "https://webhook.site/cf8db68b-c142-4bad-8c9b-401c0b569617",
+//            "action" => "UPDATE",
+//            "entityType" => "product"
+//        ]);
+});
+
+Route::group(['namespace' => '\App\Http\Controllers\Admin\MyWarehouse', 'prefix' => 'my-warehouse'], function (){
+    Route::post('/webhooks', 'MyWarehouseController@webhooks')->name('my-warehouse.webhooks');
+});

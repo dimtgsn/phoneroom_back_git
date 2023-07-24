@@ -7,11 +7,16 @@ use App\Models\Category;
 use App\Models\Enter;
 use App\Models\Image;
 use App\Models\MyWarehouse;
+use App\Models\Order;
+use App\Models\OrderStatus;
 use App\Models\Product;
 use App\Models\Variant;
 use App\Utilities\ImageConvertToBase64;
 use App\Utilities\ImageConvertToWebp;
+use App\Utilities\TranslationIntoLatin;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Backtrace\Arguments\Reducers\ArrayArgumentReducer;
 
@@ -210,7 +215,8 @@ class Service
                         Enter::firstOrCreate([
                             'enter_id' => $enter['id'],
                             'product_id' => $product->id,
-                            'variant_id' => $variant['id'],
+                            'variant_id' => $variants_edit[$i]->id,
+                            'quantity' => (int)$variant['units_in_stock'],
                         ]);
                     }
 
@@ -221,7 +227,8 @@ class Service
                     $enter = $this->createEnter($myWarehouse, $product, $product_price, $newProduct);
                     Enter::firstOrCreate([
                         'enter_id' => $enter['id'],
-                        'product_id' => $product->id
+                        'product_id' => $product->id,
+                        'quantity' => (int)$product->units_in_stock,
                     ]);
                 }
             }
@@ -232,6 +239,567 @@ class Service
         }
 
         return true;
+    }
+
+    public function import($entity, $action, $my_warehouse_id, $updated_fields){
+        $myWarehouse = MyWarehouse::select('token')->first();
+        if ($entity === 'productfolder'){
+            $service_category = new \App\Services\Category\Service();
+
+            if ($action === 'CREATE'){
+                $category = $this->getCreatedCategory($myWarehouse, $my_warehouse_id);
+                $category_name = $category['name'];
+                if (isset($category['productFolder'])){
+                    $category_parent_id = Category::where('my_warehouse_id', substr($category['productFolder']['meta']['href'], -36, 36))->first()['id'];
+                }
+                $service_category->store([
+                    'name' => $category_name,
+                    'my_warehouse_id' => $my_warehouse_id,
+                    'parent_id' => $category_parent_id ?? null,
+                ]);
+            }
+
+            if ($action === 'UPDATE'){
+                $created_category = $this->getCreatedCategory($myWarehouse, $my_warehouse_id);
+                if ($created_category && count($updated_fields)){
+                    $category = Category::where('my_warehouse_id', $my_warehouse_id)->first();
+                    if ($category){
+                        if (in_array('name', $updated_fields)){
+                            $category->update([
+                                'name' => $created_category['name'],
+                                'slug' => str(TranslationIntoLatin::translate($created_category['name']))->slug() ?? $category->slug,
+                            ]);
+                        }
+                        if (in_array('productFolder', $updated_fields)){
+                            if (isset($created_category['productFolder'])){
+                                $category_parent_id = Category::where('my_warehouse_id',
+                                    substr($created_category['productFolder']['meta']['href'], -36, 36))
+                                    ->first()['id'];
+                                $category->update([
+                                    'parent_id' => $category_parent_id ?? $category->parent_id
+                                ]);
+                            }
+                            else{
+                                $category->update([
+                                    'parent_id' => null
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($action === 'DELETE'){
+                $category = Category::where('my_warehouse_id', $my_warehouse_id)->first();
+                    if ($category){
+                        $category->delete();
+                }
+            }
+
+        }
+        if ($entity === 'product'){
+            if ($action === 'UPDATE'){
+                if (count($updated_fields)){
+                    $product = Product::where('my_warehouse_id', $my_warehouse_id)->first();
+                    $product_updated = $this->getProductOrVariant($myWarehouse,'product', $my_warehouse_id);
+                    if (in_array('mainImage', $updated_fields) || in_array('image', $updated_fields)){
+                        $images = $this->getProductOrVariantImages($myWarehouse, 'product', $my_warehouse_id)['rows'];
+                        if (count($images) !== 0){
+                            if (in_array('mainImage', $updated_fields)){
+                                $url = $images[0]['meta']['downloadHref'];
+                                $file_name = $this->getRandomString(40).'.'.explode('.', $images[0]['filename'])[1];
+                                $path = substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public/images/products/'.$file_name;
+                                $file_path = 'storage/images/products/'.$file_name;
+                                file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                $product_image = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                        ImageConvertToWebp::convert(asset($file_path), true));
+                                Storage::disk('public')->delete(substr($product->image, 8));
+                                $product->update([
+                                    'image' => $product_image ?? $product->image,
+                                ]);
+                            }
+                            if (in_array('image', $updated_fields)) {
+                                foreach ($images as $i => $img){
+                                    $product_images = $product->images()->orderBy('position')->get();
+                                    if ($i >= 1){
+                                        $url = $img['meta']['downloadHref'];
+                                        $file_name = $this->getRandomString(40).'.'.explode('.', $img['filename'])[1];
+                                        $path = substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public/images/thumbimg/'.$file_name;
+                                        $file_path = 'storage/images/thumbimg/'.$file_name;
+                                        if (count($product_images) !== 0){
+                                            if (isset($product_images[$i-1])){
+                                                if ($product_images[$i-1]->position === $i
+                                                    && $product_images[$i-1]->variant_id === null){
+                                                    file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                                    $image_path = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                                            ImageConvertToWebp::convert(asset($file_path), true));
+                                                    Storage::disk('public')->delete(substr($product_images[$i-1]->path, 8));
+                                                    $product_images[$i-1]->update([
+                                                        'path' => $image_path
+                                                    ]);
+                                                }
+                                            }
+                                            else{
+                                                file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                                $image_path = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                                        ImageConvertToWebp::convert(asset($file_path), true));
+                                                Image::firstOrCreate([
+                                                    'product_id' => $product->id,
+                                                    'position' => $i,
+                                                    'path' => $image_path,
+                                                ]);
+                                            }
+                                        }
+                                        else{
+                                            file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                            $image_path = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                                    ImageConvertToWebp::convert(asset($file_path), true));
+                                            Image::firstOrCreate([
+                                                'product_id' => $product->id,
+                                                'position' => $i,
+                                                'path' => $image_path,
+                                            ]);
+                                        }
+                                    }
+                                }
+                                if (count($images) - 1 < count($product_images)){
+                                    for ($j = count($product_images) - 1;$j !== (count($images) - 2);$j--) {
+                                        Storage::disk('public')->delete(substr($product_images[$j]->path, 8));
+                                        $product_images[$j]->delete();
+                                    }
+                                }
+                            }
+                        }
+                        else{
+                            if ($product->image){
+                                Storage::disk('public')->delete(substr($product->image, 8));
+                                $product->update([
+                                    'image' => null,
+                                ]);
+                            }
+                            if (count($product->images)){
+                                foreach ($product->images as $product_image) {
+                                    Storage::disk('public')->delete(substr($product_image->path, 8));
+                                    $product_image->delete();
+                                }
+                            }
+                        }
+                    }
+                    if (in_array('name', $updated_fields)){
+                        $product->update([
+                            'name' => $product_updated['name'] ?? $product->name,
+                            'slug' => $product_updated['name'] ?
+                                str(TranslationIntoLatin::translate($product_updated['name']))->slug() : $product->slug,
+                        ]);
+                    }
+                    if (in_array('salePrices', $updated_fields)){
+                        $product->update([
+                            'price' => (int)$product_updated['salePrices'][0]['value'] !== 0 ?
+                                (int)($product_updated['salePrices'][0]['value'] / 100) : 0,
+                        ]);
+                    }
+                    if (in_array('description', $updated_fields)){
+                        $product->update([
+                            'description' => $product_updated['description'] ?? null,
+                        ]);
+                    }
+                    if (in_array('vat', $updated_fields)){
+                        $product->update([
+                            'vat' => isset($product_updated['vatEnabled']) ?
+                                ($product_updated['vatEnabled'] ? $product_updated['vat'] : null) : $product->vat,
+                        ]);
+                    }
+                    if (in_array('minPrice', $updated_fields)){
+                        $product->update([
+                            'min_price' => (int)$product_updated['minPrice']['value'] !== 0 ?
+                                (int)($product_updated['minPrice']['value'] / 100) : 0,
+                        ]);
+                    }
+                    if (in_array('minimumBalance', $updated_fields)){
+                        $product->update([
+                            'min_balance' => isset($product_updated['minimumBalance']) ? (int)$product_updated['minimumBalance'] : 0,
+                        ]);
+                    }
+                    if (in_array('country', $updated_fields)){
+                        $product->update([
+                            'country' => isset($product_updated['country']['meta']['href']) ?
+                                $this->getCountry($myWarehouse, substr($product_updated['country']['meta']['href'], -36, 36))['name']
+                                : null,
+                        ]);
+                    }
+                    if (in_array('buyPrice', $updated_fields)){
+                        $product->update([
+                            'purchase_price' => (int)$product_updated['buyPrice']['value'] !== 0 ?
+                                (int)($product_updated['buyPrice']['value'] / 100) : 0,
+                        ]);
+                    }
+                    if (in_array('article', $updated_fields)){
+                        $product->update([
+                            'sku' => $product_updated['article'] ?? null,
+                        ]);
+                    }
+                    if (in_array('productFolder', $updated_fields)){
+                        $product->update([
+                            'category_id' => isset($product_updated['productFolder']['meta']['href']) ?
+                                Category::where('my_warehouse_id', substr($product_updated['productFolder']['meta']['href'], -36, 36))->first()['id']
+                                : $product->category_id,
+                        ]);
+                    }
+                }
+            }
+        }
+        if ($entity === 'enter' || $entity === 'loss'){
+            if ($entity === 'enter'){
+                $enter_loss_positions = $this->getCreatedEnterPositions($myWarehouse, $my_warehouse_id);
+            }
+            else{
+                $enter_loss_positions = $this->getCreatedLossPositions($myWarehouse, $my_warehouse_id);
+            }
+            if ($action === 'CREATE'){
+                foreach ($enter_loss_positions['rows'] as $position) {
+                    $product_my_warehouse_id = isset($position['assortment']['meta']['href']) ?
+                                               substr($position['assortment']['meta']['href'], -36, 36) : null;
+                    if ($product_my_warehouse_id){
+                        if ($position['assortment']['meta']['type'] === 'product'){
+                            $enter_loss_product = Product::where('my_warehouse_id', $product_my_warehouse_id)->first();
+                            if ($entity === 'enter'){
+                                $enter_loss_product->update([
+                                    'units_in_stock' => $enter_loss_product['units_in_stock'] + (int)$position['quantity']
+                                ]);
+                                Enter::firstOrCreate([
+                                    'enter_id' => $my_warehouse_id,
+                                    'product_id' => $enter_loss_product['id'],
+                                    'quantity' => (int)$position['quantity'],
+                                ]);
+                            }
+                            else{
+                                $enter_loss_product->update([
+                                    'units_in_stock' => $enter_loss_product['units_in_stock'] - (int)$position['quantity']
+                                ]);
+                                Enter::firstOrCreate([
+                                    'enter_id' => $my_warehouse_id,
+                                    'product_id' => $enter_loss_product['id'],
+                                    'quantity' => (int)('-'.$position['quantity']),
+                                ]);
+                            }
+                        }
+                        if ($position['assortment']['meta']['type'] === 'variant'){
+                            $enter_loss_variant = Variant::where('my_warehouse_id', $product_my_warehouse_id)->first();
+                            $enter_loss_variants_json = is_string($enter_loss_variant->variants_json)
+                                                        ? json_decode($enter_loss_variant->variants_json, true) :
+                                                        $enter_loss_variant->variants_json;
+                            if ($entity === 'enter'){
+                                $enter_loss_variants_json['units_in_stock'] = (int)$enter_loss_variants_json['units_in_stock'] + (int)$position['quantity'];
+                                $enter_loss_variant->update([
+                                    'variants_json' => json_encode($enter_loss_variants_json, JSON_UNESCAPED_UNICODE)
+                                ]);
+                                Enter::firstOrCreate([
+                                    'enter_id' => $my_warehouse_id,
+                                    'product_id' => $enter_loss_variant->product_id,
+                                    'variant_id' => $enter_loss_variant->id,
+                                    'quantity' => (int)$position['quantity'],
+                                ]);
+                            }
+                            else{
+                                $enter_loss_variants_json['units_in_stock'] = (int)$enter_loss_variants_json['units_in_stock'] - (int)$position['quantity'];
+                                $enter_loss_variant->update([
+                                    'variants_json' => json_encode($enter_loss_variants_json, JSON_UNESCAPED_UNICODE)
+                                ]);
+                                Enter::firstOrCreate([
+                                    'enter_id' => $my_warehouse_id,
+                                    'product_id' => $enter_loss_variant['product_id'],
+                                    'variant_id' => $enter_loss_variant->id,
+                                    'quantity' => (int)('-'.$position['quantity']),
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($action === 'UPDATE'){
+                $enter_loss = Enter::where('enter_id', $my_warehouse_id)->first();
+                if($enter_loss){
+                    if (!in_array('applicable', $updated_fields) && in_array('positions', $updated_fields)){
+                        foreach ($enter_loss_positions['rows'] as $position) {
+                            if ($entity === 'enter'){
+                                if ($position['assortment']['meta']['type'] === 'product'){
+                                    if ($enter_loss->product_id && $enter_loss->variant_id === null){
+//                                    $enter_loss_product = Product::where('id', $enter_loss['product_id'])->first();
+                                        $enter_loss->product()->update([
+                                            'units_in_stock' => ($enter_loss->product->units_in_stock - $enter_loss['quantity']) + (int)$position['quantity']
+                                        ]);
+                                    }
+                                }
+                                if ($position['assortment']['meta']['type'] === 'variant'){
+                                    if ($enter_loss->product_id && $enter_loss->variant_id) {
+                                        $enter_loss_variant = Variant::where('id', $enter_loss->variant_id)->first();
+                                        $enter_loss_variants_json = is_string($enter_loss_variant->variants_json)
+                                                                    ? json_decode($enter_loss_variant->variants_json, true) :
+                                                                    $enter_loss_variant->variants_json;
+                                        $enter_loss_variants_json['units_in_stock'] = ((int)$enter_loss_variants_json['units_in_stock'] - $enter_loss['quantity']) + (int)$position['quantity'];
+                                        $enter_loss_variant->update([
+                                            'variants_json' => json_encode($enter_loss_variants_json, JSON_UNESCAPED_UNICODE)
+                                        ]);
+                                    }
+                                }
+                                $enter_loss->update([
+                                    'quantity' => (int)$position['quantity']
+                                ]);
+                            }
+                            else{
+                                if ($position['assortment']['meta']['type'] === 'product'){
+                                    if ($enter_loss->product_id && $enter_loss->variant_id === null){
+//                                    $enter_loss_product = Product::where('id', $enter_loss['product_id'])->first();
+                                        $enter_loss->product()->update([
+                                            'units_in_stock' => ($enter_loss->product->units_in_stock - $enter_loss['quantity']) - (int)$position['quantity']
+                                        ]);
+                                    }
+                                }
+                                if ($position['assortment']['meta']['type'] === 'variant'){
+                                    if ($enter_loss->product_id && $enter_loss->variant_id) {
+                                        $enter_loss_variant = Variant::where('id', $enter_loss->variant_id)->first();
+                                        $enter_loss_variants_json = is_string($enter_loss_variant->variants_json)
+                                                                    ? json_decode($enter_loss_variant->variants_json, true) :
+                                                                    $enter_loss_variant->variants_json;
+                                        $enter_loss_variants_json['units_in_stock'] = ((int)$enter_loss_variants_json['units_in_stock'] - $enter_loss['quantity']) - (int)$position['quantity'];
+                                        $enter_loss_variant->update([
+                                            'variants_json' => json_encode($enter_loss_variants_json, JSON_UNESCAPED_UNICODE)
+                                        ]);
+                                    }
+                                }
+                                $enter_loss->update([
+                                    'quantity' => (int)('-'.$position['quantity'])
+                                ]);
+                            }
+                        }
+                    }
+                    if (in_array('applicable', $updated_fields)){
+                        foreach ($enter_loss_positions['rows'] as $position) {
+//                        $enter_loss_product = Product::where('id', $enter_loss['product_id'])->first();
+                            if ($position['assortment']['meta']['type'] === 'product') {
+                                if ($enter_loss->product_id && $enter_loss->variant_id === null){
+                                    $enter_loss->product()->update([
+                                        'units_in_stock' => $enter_loss->product->units_in_stock - $enter_loss['quantity']
+                                    ]);
+                                }
+                            }
+                            if ($position['assortment']['meta']['type'] === 'variant'){
+                                if ($enter_loss->product_id && $enter_loss->variant_id) {
+                                    $enter_loss_variant = Variant::where('id', $enter_loss->variant_id)->first();
+                                    $enter_loss_variants_json = is_string($enter_loss_variant->variants_json)
+                                                                ? json_decode($enter_loss_variant->variants_json, true) :
+                                                                $enter_loss_variant->variants_json;
+                                    $enter_loss_variants_json['units_in_stock'] = (int)$enter_loss_variants_json['units_in_stock'] - $enter_loss['quantity'];
+                                    $enter_loss_variant->update([
+                                        'variants_json' => json_encode($enter_loss_variants_json, JSON_UNESCAPED_UNICODE)
+                                    ]);
+                                }
+                            }
+                            $enter_loss->delete();
+                        }
+                    }
+                }
+            }
+
+        }
+
+        if($entity === 'customerorder'){
+            if ($action === 'UPDATE'){
+                $created_order = $this->getCreatedOrder($myWarehouse, $my_warehouse_id);
+                $order = Order::with('status')->where('my_warehouse_id', $my_warehouse_id)->first();
+                if ($created_order && $order){
+                    if (!in_array('applicable', $updated_fields)){
+                        $status_name = $this->getOrderState($myWarehouse, substr($created_order['state']['meta']['href'], -36, 36))['name'];
+                        $status = OrderStatus::where('name', $status_name)->first();
+                        if (!$status){
+                            OrderStatus::firstOrCreate([
+                                'name' =>  $status_name
+                            ]);
+                            $status = OrderStatus::where('name', $status_name)->first();
+                        }
+                        $order->update([
+                            'ship_address' => $created_order['shipmentAddress'] ?? $order->ship_address,
+                            'description' => $created_order['description'] ?? $order->description,
+                            'status_id' => $status['id']
+                        ]);
+                    }
+                    if (in_array('applicable', $updated_fields)){
+                        $order->delete();
+                    }
+                }
+            }
+        }
+
+        if ($entity === 'variant'){
+            if ($action === 'UPDATE'){
+                if (count($updated_fields)){
+                    $flag = false;
+                    $created_variant = $this->getProductOrVariant($myWarehouse, 'variant', $my_warehouse_id);
+                    $product = Product::where('my_warehouse_id', substr($created_variant['product']['meta']['href'], -36, 36))->first();
+                    $variant = Variant::where('my_warehouse_id', $my_warehouse_id)->first();
+//                    if (count($product->variants) !== 0){
+//                        foreach ($product->variants as $p_variant) {
+//                            if ($p_variant->variants_json['my_warehouse_id'] === $my_warehouse_id){
+//                                $variant =  $p_variant;
+//                            }
+//                        }
+//                    }
+                    if ($variant){
+                        $variants_json = is_string($variant->variants_json)
+                                        ? json_decode($variant->variants_json, true) :
+                                        $variant->variants_json;
+                        if (in_array('attributes', $updated_fields)){
+                            $flag = true;
+                            $variants_json_name = explode(")", explode('(', $created_variant['name'])[1])[0] ?? $variants_json['name'];
+                            $variants_json_product_name = trim(str_replace($variants_json['name'], '', $variants_json['product_name'])).' '.$variants_json_name;
+                            $variants_json['name'] = $variants_json_name;
+                            $variants_json['product_name'] = $variants_json_product_name;
+                            $variants_json['slug'] = str(TranslationIntoLatin::translate($variants_json_product_name))->slug();
+                        }
+                        if (in_array('description', $updated_fields)){
+                            $flag = true;
+                            $variants_json['description'] = $created_variant['description'] ?? "";
+                        }
+//                        if (in_array('minimumBalance', $updated_fields)){
+//                            $flag = true;
+//                            $variants_json['min_balance'] = isset($created_variant['minimumBalance']) ? (int)$created_variant['minimumBalance'] : 0;
+//                        }
+                        if (in_array('salePrices', $updated_fields)){
+                            $flag = true;
+                            $variants_json['price'] = (int)($created_variant['salePrices'][0]['value'] / 100);
+                        }
+                        if (in_array('minPrice', $updated_fields)){
+                            $flag = true;
+                            $variants_json['min_price'] = isset($created_variant['minPrice']) ?
+                                                          (int)($created_variant['minPrice']['value'] / 100) : $product->min_price;
+                        }
+                        if (in_array('buyPrice', $updated_fields)){
+                            $flag = true;
+                            $variants_json['purchase_price'] = isset($created_variant['buyPrice']) ?
+                                (int)($created_variant['buyPrice']['value'] / 100) : $product->purchase_price;
+                        }
+
+                        if (in_array('mainImage', $updated_fields) || in_array('images', $updated_fields)){
+                            $images = $this->getProductOrVariantImages($myWarehouse, 'variant', $my_warehouse_id)['rows'];
+                            if (count($images) !== 0){
+                                if (in_array('mainImage', $updated_fields)){
+                                    $url = $images[0]['meta']['downloadHref'];
+                                    $file_name = $this->getRandomString(40).'.'.explode('.', $images[0]['filename'])[1];
+                                    $path = substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public/images/products/'.$file_name;
+                                    $file_path = 'storage/images/products/'.$file_name;
+                                    file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                    $variant_image = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                            ImageConvertToWebp::convert(asset($file_path), true));
+                                    if ($variants_json['image'] !== $product->image){
+                                        Storage::disk('public')->delete(substr($variants_json['image'], 8));
+                                    }
+                                    $flag = true;
+                                    $variants_json['image'] = $variant_image;
+                                }
+                                if (in_array('images', $updated_fields)) {
+                                    foreach ($images as $i => $img){
+                                        $variant_images = Image::where('product_id', $variant->product_id)
+                                            ->where('variant_id', (int)$variants_json['id'])
+                                            ->orderBy('position')->get();
+                                        if ($i >= 1){
+                                            $url = $img['meta']['downloadHref'];
+                                            $file_name = $this->getRandomString(40).'.'.explode('.', $img['filename'])[1];
+                                            $path = substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public/images/thumbimg/'.$file_name;
+                                            $file_path = 'storage/images/thumbimg/'.$file_name;
+                                            if (count($variant_images) !== 0){
+                                                if (isset($variant_images[$i-1])){
+                                                    if ($variant_images[$i-1]->position === $i
+                                                        && $variant_images[$i-1]->variant_id === null){
+                                                        file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                                        $image_path = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                                                ImageConvertToWebp::convert(asset($file_path), true));
+                                                        Storage::disk('public')->delete(substr($variant_images[$i-1]->path, 8));
+                                                        $variant_images[$i-1]->update([
+                                                            'path' => $image_path
+                                                        ]);
+                                                    }
+                                                }
+                                                else{
+                                                    file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                                    $image_path = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                                            ImageConvertToWebp::convert(asset($file_path), true));
+                                                    Image::firstOrCreate([
+                                                        'product_id' => $product->id,
+                                                        'variant_id' => (int)$variants_json['id'],
+                                                        'position' => $i,
+                                                        'path' => $image_path,
+                                                    ]);
+                                                }
+                                            }
+                                            else{
+                                                file_put_contents($path, $this->downloadImage($myWarehouse, $url));
+                                                $image_path = 'storage'.str_replace(substr($_SERVER['DOCUMENT_ROOT'], 0, -6).'storage/app/public', '',
+                                                        ImageConvertToWebp::convert(asset($file_path), true));
+                                                Image::firstOrCreate([
+                                                    'product_id' => $product->id,
+                                                    'variant_id' => (int)$variants_json['id'],
+                                                    'position' => $i,
+                                                    'path' => $image_path,
+                                                ]);
+                                            }
+                                        }
+                                    }
+                                    if (count($images) - 1 < count($variant_images)){
+                                        for ($j = count($variant_images) - 1;$j !== (count($images) - 2);$j--) {
+                                            Storage::disk('public')->delete(substr($variant_images[$j]->path, 8));
+                                            $variant_images[$j]->delete();
+                                        }
+                                    }
+                                }
+                            }
+                            else{
+                                if ($variants_json['image']){
+                                    if ($variants_json['image'] !== $product->image){
+                                        Storage::disk('public')->delete(substr($variants_json['image'], 8));
+                                    }
+                                    $variants_json['image'] = '';
+                                    $flag = true;
+                                }
+                                $variant_images = Image::where('product_id', $variant->product_id)
+                                    ->where('variant_id', (int)$variants_json['id'])->get();
+                                if (count($variant_images)){
+                                    foreach ($variant_images as $variant_image) {
+                                        Storage::disk('public')->delete(substr($variant_image->path, 8));
+                                        $variant_image->delete();
+                                    }
+                                }
+                            }
+                        }
+
+                        if ($flag){
+                            Variant::where('id', $variant->id)->update([
+                                'variants_json' => json_encode($variants_json, JSON_UNESCAPED_UNICODE),
+                            ]);
+                        }
+                    }
+                }
+            }
+            if ($action === 'DELETE'){
+                $variant = Variant::where('my_warehouse_id', $my_warehouse_id)->first();
+                if ($variant){
+                    $variant->delete();
+                }
+            }
+        }
+
+    }
+
+    public function getRandomString($n){
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $randomString = '';
+
+        for ($i = 0; $i < $n; $i++) {
+            $index = rand(0, strlen($characters) - 1);
+            $randomString .= $characters[$index];
+        }
+
+        return $randomString;
     }
 
     public function getCurlOptArray($url, $method, $myWarehouse, $data='{}'){
@@ -816,5 +1384,62 @@ class Service
             ->get('https://online.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/embeddedtemplate/');
 
         return json_decode($template->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getCreatedCategory($myWarehouse, $my_warehouse_category_id){
+        $category = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/productfolder/'.$my_warehouse_category_id);
+
+        return json_decode($category->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getCountry($myWarehouse, $my_warehouse_country_id){
+        $country = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/country/'.$my_warehouse_country_id);
+
+        return json_decode($country->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getCreatedEnterPositions($myWarehouse, $my_warehouse_enter_id){
+        $enter_positions = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/enter/'.$my_warehouse_enter_id.'/positions');
+
+        return json_decode($enter_positions->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getCreatedLossPositions($myWarehouse, $my_warehouse_loss_id){
+        $loss_positions = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/loss/'.$my_warehouse_loss_id.'/positions');
+
+        return json_decode($loss_positions->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getCreatedOrder($myWarehouse, $my_warehouse_order_id){
+        $order = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/customerorder/'.$my_warehouse_order_id);
+
+        return json_decode($order->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getOrderState($myWarehouse, $my_warehouse_state_id){
+        $state = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/'.$my_warehouse_state_id);
+
+        return json_decode($state->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getProductOrVariantImages($myWarehouse, $type, $my_warehouse_product_id){
+        $image = Http::withToken($myWarehouse->token)
+            ->get('https://online.moysklad.ru/api/remap/1.2/entity/'.$type.'/'.$my_warehouse_product_id.'/images');
+
+        return json_decode($image->body(), JSON_UNESCAPED_UNICODE);
+    }
+
+    public function downloadImage($myWarehouse, $url){
+        $image = Http::withToken($myWarehouse->token)->withHeaders([
+            "Content-Type" => "application/json",
+        ])->get($url);
+
+        return $image->body();
     }
 }

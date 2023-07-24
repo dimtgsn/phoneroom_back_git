@@ -25,6 +25,9 @@ class Service
             foreach (json_decode($data['details'], true) as $product){
                 $pr = Product::where('id', $product['id'])->first();
                 if ($pr){
+                    if ($pr->units_in_stock <= 0){
+                        return false;
+                    }
                     $price = $pr->price;
                 } else{
                     $product_id = $product['id'];
@@ -33,6 +36,9 @@ class Service
                         from variants
                         where (variants_json->>0)::jsonb  @> '{\"id\": \"$product_id\"}'"
                     )[0]->data;
+                    if ((int)json_decode($variant, true)['units_in_stock'] <= 0){
+                        return false;
+                    }
                     $price = (int)json_decode($variant, true)['price'];
                 }
                 \DB::table('order_products')->insert([
@@ -107,7 +113,9 @@ class Service
         $contract = $service->createContract($myWarehouse, $agent, $order->id, $sum);
         $newOrder = $service->createOrder($myWarehouse, $agent, $order->id, $order_data, $status, $contract);
         $service->createDemand($myWarehouse, $agent, $order_data);
-
+        $order->update([
+            'my_warehouse_id' => $newOrder['id']
+        ]);
         return $newOrder['id'] ?? false;
     }
 

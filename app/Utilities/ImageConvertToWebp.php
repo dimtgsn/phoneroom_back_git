@@ -63,8 +63,14 @@ class ImageConvertToWebp
             }
             imagewebp($image, $destination, $quality);
         }
-        if ($removeOld)
-            unlink($source);
+        if ($removeOld){
+            if (str_contains($source, asset(''))){
+                unlink(Storage::path(str_replace(asset('').'storage/', '', $source)));
+            }
+            else{
+                unlink($source);
+            }
+        }
 
         if ($image_webp || $image_avif){
             return $destination_jpg;

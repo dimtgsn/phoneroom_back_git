@@ -14,6 +14,7 @@ class Enter extends Model
         'enter_id',
         'product_id',
         'variant_id',
+        'quantity',
     ];
 
     public function product(): BelongsTo

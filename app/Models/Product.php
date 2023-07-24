@@ -41,7 +41,7 @@ class Product extends Model
         'option',
         'variants',
         'baskets',
-        'enter',
+        'enters',
     ];
 
     protected $fillable = [
@@ -128,9 +128,9 @@ class Product extends Model
         return $this->hasOne(Property::class);
     }
 
-    public function enter(): HasOne
+    public function enters(): HasMany
     {
-        return $this->hasOne(Enter::class);
+        return $this->hasMany(Enter::class);
     }
 
     public function option(): HasOne

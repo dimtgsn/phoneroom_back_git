@@ -4,7 +4,8 @@
 /public/storage
 /storage/*.key
 /vendor
-.env
+/.env
+/README.md
 .env.backup
 .env.production
 .phpunit.result.cache

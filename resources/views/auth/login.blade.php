@@ -16,7 +16,6 @@
                             <h4 class="card-title">Вход</h4>
                             <form method="POST" action="{{ route('login') }}" class="my-login-validation">
                                 @csrf
-
                                 <div class="form-group mb-4">
                                     <label for="phone" class="pb-1">{{ __('Номер телефона') }}</label>
 
