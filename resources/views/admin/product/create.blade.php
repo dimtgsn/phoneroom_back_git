@@ -6,7 +6,7 @@
     <section class="h-100">
         <div class="container-fluid h-100">
             <div class="row justify-content-md-left w-100 h-100">
-                <div class="card-wrapper col-10">
+                <div class="card-wrapper col-12">
                     <div class="">
                         <div class="card card-danger">
                             <div class="card-header">

@@ -19,7 +19,7 @@
             </div>
             <div class="col-lg-6 col-6">
                 <!-- small box -->
-                <div class="small-box bg-warning">
+                <div class="small-box mt-lg-0 mt-3 bg-warning">
                     <div class="inner">
                         <h3>{{ $userRegularCount }}</h3>
 

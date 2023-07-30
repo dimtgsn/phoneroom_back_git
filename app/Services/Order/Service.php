@@ -2,6 +2,7 @@
 
 namespace App\Services\Order;
 
+use App\Models\Basket;
 use App\Models\MyWarehouse;
 use App\Models\Order;
 use App\Models\Product;
@@ -19,8 +20,8 @@ class Service
                 'user_id' => $data['user_id'],
                 'status_id' => 5,
                 'total' => (int)$data['total'],
-                'ship_address' => json_decode($data['ship_address'], true)['address'],
-                'zip' => json_decode($data['ship_address'], true)['zip'],
+                'ship_address' => $data['ship_address'],
+                'zip' => $data['Zip'],
             ]);
             foreach (json_decode($data['details'], true) as $product){
                 $pr = Product::where('id', $product['id'])->first();
@@ -32,14 +33,22 @@ class Service
                 } else{
                     $product_id = $product['id'];
                     $variant = DB::select("
-                        select variants_json->>0 as data , product_id
+                        select variants_json->>0 as data , product_id, id
                         from variants
                         where (variants_json->>0)::jsonb  @> '{\"id\": \"$product_id\"}'"
-                    )[0]->data;
-                    if ((int)json_decode($variant, true)['units_in_stock'] <= 0){
+                    );
+                    if (!$variant){
+                        $variant = DB::select("
+                            select variants_json as data , product_id, id
+                            from variants
+                            where (variants_json)::jsonb  @> '{\"id\": \"$product_id\"}'"
+                        );
+                    }
+                    $variant_data = is_string($variant[0]->data) ? json_decode($variant[0]->data, true) : $variant[0]->data;
+                    if ((int)$variant_data['units_in_stock'] <= 0){
                         return false;
                     }
-                    $price = (int)json_decode($variant, true)['price'];
+                    $price = (int)$variant_data['price'];
                 }
                 \DB::table('order_products')->insert([
                     'quantity' => $product['quantity'],
@@ -47,9 +56,23 @@ class Service
                     'price' => $price,
                     'order_id' => $order->id,
                 ]);
-                $pr->update([
-                    'units_in_stock' => (int)$pr->units_in_stock - (int)$product['quantity']
-                ]);
+                if ($pr){
+                    $pr->update([
+                        'units_in_stock' => (int)$pr->units_in_stock - (int)$product['quantity']
+                    ]);
+                }
+                else{
+                    $variant_data['units_in_stock'] = (int)$variant_data['units_in_stock'] - (int)$product['quantity'];
+                    Variant::where('id', $variant[0]->id)->update([
+                        'variants_json' => json_encode($variant_data, JSON_UNESCAPED_UNICODE)
+                    ]);
+                }
+                $basket_products = \DB::table('basket_product')->where('basket_id', Basket::where('user_id', $data['user_id'])->first()->id)->delete();
+//                if (count($basket_products)){
+//                    foreach ($basket_products as $basket_product) {
+//                        $basket_product->delete();
+//                    }
+//                }
             }
 
             return $order;
@@ -152,8 +175,8 @@ class Service
             }
             else{
                 foreach (Variant::all() as $variants){
-                    if ((int)json_decode($variants->variants_json, true)['id'] === $op->product_id){
-                        $variant = json_decode($variants->variants_json, true);
+                    $variant = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+                    if ((int)$variant['id'] === $op->product_id){
                         if ($need_weight){
                             $products_weight += (int)preg_replace("/[^0-9]/", '', json_decode(Product::where('id', $variants->product_id)->first()->property->properties_json, true)["Вес"]["Вес"]
                                 ?? json_decode(Product::where('id', $variants->product_id)->first()->property->properties_json, true)["Вес"]);

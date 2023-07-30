@@ -6,7 +6,7 @@
     <section class="h-100">
         <div class="container-fluid h-100">
             <div class="row justify-content-md-left w-100 h-100">
-                <div class="card-wrapper col-8">
+                <div class="card-wrapper col-12 col-lg-10 col-xl-8">
                     <div class="">
                         <div class="card card-danger">
                             <div class="card-body">
@@ -29,7 +29,7 @@
                                                 </span>
                                                         @enderror
                                                     </div>
-                                                    <div class="input-group-append">
+                                                    <div class="input-group-append d-none d-sm-block">
                                                         <span class="input-group-text">Загрузка</span>
                                                     </div>
                                                     <div class="remove_image_main d-inline-block btn btn-danger">&#10008;</div>
@@ -46,7 +46,7 @@
                                                 </span>
                                                         @enderror
                                                     </div>
-                                                    <div class="input-group-append">
+                                                    <div class="input-group-append d-none d-sm-block">
                                                         <span class="input-group-text">Загрузка</span>
                                                     </div>
                                                     <div class="remove_image_main d-inline-block btn btn-danger">&#10008;</div>

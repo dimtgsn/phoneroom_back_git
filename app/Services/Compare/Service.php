@@ -13,7 +13,7 @@ class Service
         ]);
     }
 
-    public function             update($data, $user)
+    public function update($data, $user)
     {
         $product = (int) $data['product_id'];
         $category = (int) $data['category_id'];

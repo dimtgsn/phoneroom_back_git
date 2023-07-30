@@ -7,7 +7,7 @@
         <section class="h-100">
             <div class="container-fluid h-100">
                 <div class="row justify-content-md-left w-100 h-100">
-                    <div class="card-wrapper col-10">
+                    <div class="card-wrapper col-12 col-lg-10">
                         <div class="card card-dark">
                             <div class="card-header">
                                 <h3 class="card-title text-bold">Заказ №{{ $order->id }}. Выбор доставки</h3>
@@ -31,7 +31,7 @@
                                     </div>
                                 </div>
                                 <div class="deliveries d-flex mt-3">
-                                    <div class="boxbery d-flex flex-column col-6">
+                                    <div class="boxbery d-flex flex-column col-6 mr-3">
                                         <h3 class="card-title text-lg"><span class="text-bold">Boxberry</span> курьером:</h3>
 {{--                                        <p class="cost mt-2 text-md">Стоимость доставки - {{ $delivery['price'] }}</p>--}}
 {{--                                        <p class="cost mt-2 text-md">Срок доставки - {{ $delivery['delivery_period'] }}</p>--}}
@@ -40,7 +40,7 @@
                                         <form method="POST" action="{{ route('admin.orders.parsel_create', [$order->id, 1]) }}" class="pt-3 my-login-validation" enctype="multipart/form-data">
                                             @csrf
                                             <div class="form-group mt-3">
-                                                <button type="submit" class="btn w-50 btn-primary btn-block">
+                                                <button type="submit" class="btn w-100 btn-primary btn-block">
                                                     Выбрать
                                                 </button>
                                             </div>
@@ -54,7 +54,7 @@
                                         <form method="POST" action="{{ route('admin.orders.parsel_create', [$order->id, 2]) }}" class="pt-3 my-login-validation" enctype="multipart/form-data">
                                             @csrf
                                             <div class="form-group mt-3">
-                                                <button type="submit" class="btn w-50 btn-primary btn-block">
+                                                <button type="submit" class="btn w-100 btn-primary btn-block">
                                                     Выбрать
                                                 </button>
                                             </div>

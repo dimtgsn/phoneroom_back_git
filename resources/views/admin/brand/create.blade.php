@@ -6,7 +6,7 @@
     <section class="h-100">
         <div class="container-fluid h-100">
             <div class="row justify-content-md-left w-100 h-100">
-                <div class="card-wrapper col-8">
+                <div class="card-wrapper col-12 col-lg-10">
                     <div class="">
                         <div class="card card-danger">
                             <div class="card-header">
@@ -41,7 +41,7 @@
                                                 </span>
                                                 @enderror
                                             </div>
-                                            <div class="input-group-append">
+                                            <div class="input-group-append d-none d-sm-block">
                                                 <span class="input-group-text">Загрузка</span>
                                             </div>
                                         </div>
@@ -60,7 +60,7 @@
                                     </div>
 
                                         <div class="form-group mt-5">
-                                            <button type="submit" class="btn w-25 btn-danger btn-block">
+                                            <button type="submit" class="btn w-50 btn-danger btn-block">
                                                 Создать
                                             </button>
                                         </div>

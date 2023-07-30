@@ -6,7 +6,7 @@
     <section class="h-100">
         <div class="container-fluid h-100">
             <div class="row justify-content-md-left w-100 h-100">
-                <div class="card-wrapper col-8">
+                <div class="card-wrapper col-12 col-lg-10">
                     {{--                    <div class="brand">--}}
                     {{--                        <img class="" src="{{ asset("dist/img/Group 771.svg") }}">--}}
                     {{--                    </div>--}}

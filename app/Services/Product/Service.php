@@ -613,8 +613,9 @@ class Service
                         }
                         else{
                             foreach ($product->variants as $var){
-                                if (json_decode($var->variants_json, true)['name'] === $variant['name']){
-                                    $variant['image'] = json_decode($var->variants_json, true)['image'];
+                                $v = is_string($var->variants_json) ? json_decode($var->variants_json, true) : $var->variants_json;
+                                if ($v['name'] === $variant['name']){
+                                    $variant['image'] = $v['image'];
                                 }
                             }
                             foreach ($product->variants as $var){
@@ -1017,9 +1018,10 @@ class Service
         $var_img = null;
         $var_id = 0;
         foreach ($product->variants as $variants){
-            if (json_decode($variants->variants_json, true)['slug'] === $variant_slug){
-                $var_img = json_decode($variants->variants_json, true)['image'];
-                $var_id = json_decode($variants->variants_json, true)['id'];
+            $var = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+            if ($var['slug'] === $variant_slug){
+                $var_img = $var['image'];
+                $var_id = $var['id'];
             }
         }
         if (isset($data['properties'])){
@@ -1034,8 +1036,9 @@ class Service
                 if ($var_img){
                     $flag = false;
                     foreach ($product->variants as $variants){
-                        if (json_decode($variants->variants_json, true)['image'] === $var_img &&
-                            json_decode($variants->variants_json, true)['id'] !== $var_id){
+                        $var = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+                        if ($var['image'] === $var_img &&
+                            $var['id'] !== $var_id){
                             $flag = true;
                             break;
                         }
@@ -1107,33 +1110,34 @@ class Service
 
             if (isset($product->variants)){
                 foreach ($product->variants as $i => $product_variant){
-                    if (json_decode($product_variant->variants_json, true)['slug'] === $variant_slug){
+                    $variant_data = is_string($product_variant->variants_json) ? json_decode($product_variant->variants_json, true) : $product_variant->variants_json;
+                    if ($variant_data['slug'] === $variant_slug){
                         $variant = [
-                            'name' => json_decode($product_variant->variants_json, true)['name'],
-                            'product_name' => $data['name'] ?? json_decode($product_variant->variants_json, true)['product_name'],
-                            'price' => $data['price'] ?? json_decode($product_variant->variants_json, true)['price'],
-                            'old_price' => $data['old_price'] ?? json_decode($product_variant->variants_json, true)['old_price'],
-                            'description' => $data['description'] ?? json_decode($product_variant->variants_json, true)['description'],
-                            'units_in_stock' => $data['units_in_stock'] ?? json_decode($product_variant->variants_json, true)['units_in_stock'],
-                            'min_price' => $data['min_price'] ?? json_decode($product_variant->variants_json, true)['min_price'],
-                            'min_balance' => $data['min_balance'] ?? json_decode($product_variant->variants_json, true)['min_balance'],
-                            'country' => $data['country'] ?? json_decode($product_variant->variants_json, true)['country'],
-                            'purchase_price' => $data['purchase_price'] ?? json_decode($product_variant->variants_json, true)['purchase_price'],
-                            'rating' => $data['rating'] ?? json_decode($product_variant->variants_json, true)['rating'],
-                            'options' => json_decode($product_variant->variants_json, true)['options'],
+                            'name' => $variant_data['name'],
+                            'product_name' => $data['name'] ?? $variant_data['product_name'],
+                            'price' => $data['price'] ?? $variant_data['price'],
+                            'old_price' => $data['old_price'] ?? $variant_data['old_price'],
+                            'description' => $data['description'] ?? $variant_data['description'],
+                            'units_in_stock' => $data['units_in_stock'] ?? $variant_data['units_in_stock'],
+                            'min_price' => $data['min_price'] ?? $variant_data['min_price'],
+                            'min_balance' => $data['min_balance'] ?? $variant_data['min_balance'],
+                            'country' => $data['country'] ?? $variant_data['country'],
+                            'purchase_price' => $data['purchase_price'] ?? $variant_data['purchase_price'],
+                            'rating' => $data['rating'] ?? $variant_data['rating'],
+                            'options' => $variant_data['options'],
                             'published' => $data['published'],
-                            'image' => $data['image'] ?? json_decode($product_variant->variants_json, true)['image'],
-                            'id' => json_decode($product_variant->variants_json, true)['id'],
-                            'created_at' => json_decode($product_variant->variants_json, true)['created_at'] ?? date(now()),
+                            'image' => $data['image'] ?? $variant_data['image'],
+                            'id' => $variant_data['id'],
+                            'created_at' => $variant_data['created_at'] ?? date(now()),
                             'updated_at' => date(now()),
                         ];
 
-                        $variant['brand'] = json_decode($product_variant->variants_json, true)['brand'];
-                        $variant['category'] = json_decode($product_variant->variants_json, true)['category'];
+                        $variant['brand'] = $variant_data['brand'];
+                        $variant['category'] = $variant_data['category'];
                         $variant['slug'] = $variant['slug'] ?? str(TranslationIntoLatin::translate($product->slug.' '.$variant['name']))->slug();
                         $variant['sku'] = trim(str_replace(" ", "-",strtoupper(TranslationIntoLatin::translate($product->name.' '.$variant['id'].' '.$product->category_id.' '.$product->brand_id))));
 //                        if($product->exported){
-//                            $variant['my_warehouse_id'] = json_decode($product_variant->variants_json, true)['my_warehouse_id'];
+//                            $variant['my_warehouse_id'] = $variant_data['my_warehouse_id'];
 //                        }
                         Variant::find($product_variant->id)->update([
                             'variants_json' => json_encode($variant, JSON_UNESCAPED_UNICODE),

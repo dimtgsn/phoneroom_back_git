@@ -14,8 +14,8 @@
             </div>
         @endif
         <hr>
-        <div class="row mt-3">
-            <table class="table table-hover table-striped table-ligth">
+        <div class="col-12 mt-3">
+            <table id="example2" class="table table-responsive-lg table-hover dataTable dtr-inline table table-hover table-striped table-ligth" aria-describedby="example2_info">
                 <thead class="thead-dark">
                 <tr>
                     <th scope="col">Id</th>
@@ -34,7 +34,7 @@
                 </span>
                 @foreach($users as $u)
                     <tr>
-                        <th scope="row">{{ $u->id }}</th>
+                        <th scope="col">{{ $u->id }}</th>
                         <th scope="col">{{ $u->first_name}}</th>
                         <th scope="col">
                             @if($u->position->name === 'regular')

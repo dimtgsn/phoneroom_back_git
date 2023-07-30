@@ -165,6 +165,10 @@ Route::group(['namespace' => '\App\Http\Controllers\Admin\Order', 'prefix' => 'o
 
 Route::get('/email_test', function (){
     $order = Order::with('status')->first();
+    $service = new \App\Services\MyWarehouse\Service();
+    $myWarehouse = MyWarehouse::select('token')->first();
+    return $service->getOrganization($myWarehouse);
+    return $service->getEntityStates($myWarehouse, 'customerorder');
 //    Mail::to('gasanyandmitry@yandex.ru')->send(new OrderCreatedMail($order));
 //    $str = Str::random(5000000);
 //    if (!Redis::get('str1')){

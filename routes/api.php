@@ -54,7 +54,15 @@ Route::group(['middleware'=>['auth:sanctum', 'json']], function (){
     });
 
     Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
+        Route::get('/{user}', 'OrderController@index')->name('api.orders.index');
         Route::post('/create', 'OrderController@create')->name('api.orders.create');
+        Route::get('/zip_check', 'OrderController@zip_check')->name('api.orders.zip_check');
+    });
+
+
+    Route::group(['namespace' => '\App\Http\Controllers\Api\Comment', 'prefix' => 'comments'], function (){
+        Route::post('/create', 'CommentController@create')->name('api.comments.create');
+        Route::patch('/{comment}', 'CommentController@update')->name('api.comments.update');
     });
 });
 
@@ -110,14 +118,13 @@ Route::get('promotion_images', function (){
 })->name('api.promotion_images.index');
 
 // TODO перекинуть в только для авторизированных пользователей
-Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
-    Route::get('/{user}', 'OrderController@index')->name('api.orders.index');
-//    Route::post('/create', 'OrderController@create')->name('api.orders.create');
-    Route::get('/zip_check', 'OrderController@zip_check')->name('api.orders.zip_check');
-});
+//Route::group(['namespace' => '\App\Http\Controllers\Api\Order', 'prefix' => 'orders'], function (){
+//    Route::get('/{user}', 'OrderController@index')->name('api.orders.index');
+//    Route::get('/zip_check', 'OrderController@zip_check')->name('api.orders.zip_check');
+//});
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\Comment', 'prefix' => 'comments'], function (){
     Route::get('/', 'CommentController@index')->name('api.comments.index');
-    Route::post('/create', 'CommentController@create')->name('api.comments.create');
-    Route::patch('/{comment}', 'CommentController@update')->name('api.comments.update');
+//    Route::post('/create', 'CommentController@create')->name('api.comments.create');
+//    Route::patch('/{comment}', 'CommentController@update')->name('api.comments.update');
 });

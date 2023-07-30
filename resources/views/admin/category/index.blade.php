@@ -10,35 +10,33 @@
             </div>
         </div>
         <hr>
-        <div class="col-12">
+        <div class="col-12 col-lg-10">
             <table id="example2" class="table table-responsive-lg table-hover dataTable dtr-inline" aria-describedby="example2_info">
                 <thead class="thead thead">
                 <tr>
                     <th scope="col">ID</th>
                     <th scope="col">Название</th>
-                    <th scope="col">Действия</th>
                     <th scope="col">Дата создания</th>
                     <th scope="col">Дата изменения</th>
+                    <th scope="col">Действия</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach($categories as $category)
                     <tr>
-                        <th>{{ $category->id }}</th>
-                        <th>{{ $category->name }}</th>
-                        <th>
+                        <th scope="col">{{ $category->id }}</th>
+                        <th scope="col">{{ $category->name }}</th>
+                        <th scope="col">{{ $category->created_at }}</th>
+                        <th scope="col">{{ $category->updated_at ?? 'Изменений нет' }}</th>
+                        <th scope="col">
                             <a href="{{ route('admin.categories.show', $category->slug) }}"><i class="fa fa-solid fa-eye"></i></a>
                             <a class="pl-md-5 pr-md-5 pl-3 pr-3" href="{{ route('admin.categories.edit', $category->slug) }}"><i class="fa fa-solid fa-pen"></i></a>
                             <form class="m-0 p-0 d-inline-block" action="{{ route('admin.categories.destroy', $category->slug) }}" method="post">
                                 @csrf
                                 @method('delete')
                                 <button class="btn btn-danger" type="submit"><i class="fa fa-solid fa-trash"></i></button>
-
-                                {{--                                <a class="pr-0" href="{{ route('admin.categories.destroy', $category->slug) }}"><i class="fa fa-solid fa-trash"></i></a>--}}
                             </form>
                         </th>
-                        <th>{{ $category->created_at }}</th>
-                        <th>{{ $category->updated_at ?? 'Изменений нет' }}</th>
                     </tr>
                 @endforeach
                 </tbody>
@@ -46,9 +44,9 @@
                     <tr>
                         <th rowspan="1" colspan="1">ID</th>
                         <th rowspan="1" colspan="1">Название</th>
-                        <th rowspan="1" colspan="1">Действия</th>
                         <th rowspan="1" colspan="1">Дата создания</th>
                         <th rowspan="1" colspan="1">Дата изменения</th>
+                        <th rowspan="1" colspan="1">Действия</th>
                     </tr>
                 </tfoot>
             </table>

@@ -6,20 +6,14 @@
         <hr>
         <div>
             <div class="card card-primary">
-{{--                <div class="card-header text-lg">Подключение к аккаунту</div>--}}
                 <div class="card-body d-flex justify-content-between">
-                    <div class="col-4">
-                        <h5>При экспорте каждый товар экспортируется в течении <span style="color: #E31235">3 минут</span></h5>
-                        <h6><span style="color: #E31235">*</span>Можно спокойно покинуть страницу, так как товары загружаются асинхронно(параллельно)</h6>
+                    <div class="col-12">
                         <a href="#" disabled class="w-100 mt-3 active btn btn-outline-dark">Экспорт товаров</a>
                         <hr>
-{{--                        <a href="#" disabled class="w-100 btn btn-outline-dark">Экспорт товаров</a>--}}
-{{--                        <hr>--}}
-{{--                        <a href="#" disabled class="w-100 btn btn-outline-dark">Экспорт товаров</a>--}}
-{{--                        <hr>--}}
-{{--                        <a href="#" disabled class="w-100 btn btn-outline-dark">Экспорт товаров</a>--}}
+                        <h5>При экспорте каждый товар экспортируется в течении <span style="color: #E31235">3 минут</span></h5>
+                        <h6><span style="color: #E31235">*</span>Можно спокойно покинуть страницу, так как товары загружаются асинхронно(параллельно)</h6>
                     </div>
-                    <div class="col-7 offset-1 text-end">
+                    <div class="col-12">
                         <form action="{{ route('admin.my-warehouse.export') }}" method="post" class="pt-3 my-login-validation" enctype="multipart/form-data">
                             @csrf
                             <h2 class="text-lg text-bold mb-3">Не экспортированные товары:</h2>
@@ -45,20 +39,9 @@
                                         <th>
                                             <a href="{{ route('admin.products.show', $product->slug) }}"><i class="fa fa-solid fa-eye"></i></a>
                                         </th>
-                                        {{--                                    <th>{{ $product->created_at }}</th>--}}
-                                        {{--                                    <th>{{ $product->updated_at ?? 'Изменений нет' }}</th>--}}
                                     </tr>
                                 @endforeach
                                 </tbody>
-                                <tfoot>
-                                {{--                            <tr>--}}
-                                {{--                                <th rowspan="1" colspan="1">ID</th>--}}
-                                {{--                                <th rowspan="1" colspan="1">Название</th>--}}
-                                {{--                                <th rowspan="1" colspan="1">Просмотр</th>--}}
-                                {{--                                <th rowspan="1" colspan="1">Дата создания</th>--}}
-                                {{--                                <th rowspan="1" colspan="1">Дата изменения</th>--}}
-                                {{--                            </tr>--}}
-                                </tfoot>
                             </table>
                             <div class="form-group mt-3">
                                 <button type="submit" class="btn w-100 btn-danger btn-block">

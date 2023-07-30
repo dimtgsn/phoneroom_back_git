@@ -45,11 +45,12 @@ class CategoryController extends Controller
                 if (count($category->products[$i]->variants)){
                     $category->products[$i] = json_decode($category->products[$i]->variants, true);
                     for($j=0;$j<count($category->products[$i]);$j++) {
-                        if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] < $min_price) {
-                            $min_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                        $variant_data = is_string($category->products[$i][$j]['variants_json']) ? json_decode($category->products[$i][$j]['variants_json'], true) : $category->products[$i][$j]['variants_json'];
+                        if ($variant_data['price'] < $min_price) {
+                            $min_price = $variant_data['price'];
                         }
-                        if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] >= $max_price) {
-                            $max_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                        if ($variant_data['price'] >= $max_price) {
+                            $max_price = $variant_data['price'];
                         }
                     }
                 }
@@ -70,11 +71,12 @@ class CategoryController extends Controller
                     if (count($category->products[$i]->variants)){
                         $category->products[$i] = json_decode($category->products[$i]->variants, true);
                         for($j=0;$j<count($category->products[$i]);$j++) {
-                            if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] < $min_price) {
-                                $min_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                            $variant_data = is_string($category->products[$i][$j]['variants_json']) ? json_decode($category->products[$i][$j]['variants_json'], true) : $category->products[$i][$j]['variants_json'];
+                            if ($variant_data['price'] < $min_price) {
+                                $min_price = $variant_data['price'];
                             }
-                            if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] >= $max_price) {
-                                $max_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                            if ($variant_data['price'] >= $max_price) {
+                                $max_price = $variant_data['price'];
                             }
                         }
                     }
@@ -112,11 +114,12 @@ class CategoryController extends Controller
             if (count($category->products[$i]->variants)){
                 $category->products[$i] = json_decode($category->products[$i]->variants, true);
                 for($j=0;$j<count($category->products[$i]);$j++) {
-                    if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] < $min_price) {
-                        $min_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                    $variant_data = is_string($category->products[$i][$j]['variants_json']) ? json_decode($category->products[$i][$j]['variants_json'], true) : $category->products[$i][$j]['variants_json'];
+                    if ($variant_data['price'] < $min_price) {
+                        $min_price = $variant_data['price'];
                     }
-                    if (json_decode($category->products[$i][$j]['variants_json'], true)['price'] >= $max_price) {
-                        $max_price = json_decode($category->products[$i][$j]['variants_json'], true)['price'];
+                    if ($variant_data['price'] >= $max_price) {
+                        $max_price = $variant_data['price'];
                     }
                 }
             }

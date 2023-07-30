@@ -9,31 +9,31 @@
           href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <link rel="shortcut icon" href="{{ asset(\App\Models\Logo::all()->first()->favicon) }}" type="image/x-icon">
     <!-- Font Awesome -->
-    @vite('public/plugins/fontawesome-free/css/all.min.css')
+    <link rel="stylesheet" href="{{ asset('plugins/fontawesome-free/css/all.min.css') }}">
     <!-- Ionicons -->
     <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
     <!-- Tempusdominus Bootstrap 4 -->
-    {{--    @vite('public/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')--}}
+    {{--    <link rel="stylesheet" href="{{ asset('plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')}}">--}}
     <!-- iCheck -->
-    {{--    @vite('public/plugins/icheck-bootstrap/icheck-bootstrap.min.css')--}}
+    {{--    <link rel="stylesheet" href="{{ asset('plugins/icheck-bootstrap/icheck-bootstrap.min.css')}}">--}}
     <!-- JQVMap -->
-    @vite('public/plugins/jqvmap/jqvmap.min.css')
+    <link rel="stylesheet" href="{{ asset('plugins/jqvmap/jqvmap.min.css') }}">
     <!-- Theme style -->
-    @vite('public/plugins/select2/css/select2.min.css')
-    @vite('public/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css')
+    <link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
     <!-- overlayScrollbars -->
-    @vite('public/plugins/overlayScrollbars/css/OverlayScrollbars.min.css')
+    <link rel="stylesheet" href="{{ asset('plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
     <!-- Daterange picker -->
-    @vite('public/plugins/daterangepicker/daterangepicker.css')
+    <link rel="stylesheet" href="{{ asset('plugins/daterangepicker/daterangepicker.css') }}">
     <!-- summernote -->
-    @vite('public/plugins/summernote/summernote-bs4.min.css')
+    <link rel="stylesheet" href="{{ asset('plugins/summernote/summernote-bs4.min.css') }}">
 
-    @vite('public/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css')
-    @vite('public/plugins/datatables-responsive/css/responsive.bootstrap4.min.css')
-    @vite('public/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">')
+    <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('plugins/datatables-buttons/css/buttons.bootstrap4.min.css">') }}">
     <style type="text/css">/* Chart.js */
         @keyframes chartjs-render-animation{from{opacity:.99}to{opacity:1}}.chartjs-render-monitor{animation:chartjs-render-animation 1ms}.chartjs-size-monitor,.chartjs-size-monitor-expand,.chartjs-size-monitor-shrink{position:absolute;direction:ltr;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;visibility:hidden;z-index:-1}.chartjs-size-monitor-expand>div{position:absolute;width:1000000px;height:1000000px;left:0;top:0}.chartjs-size-monitor-shrink>div{position:absolute;width:200%;height:200%;left:0;top:0}</style>
-    @vite('public/dist/css/adminlte.css')
+    <link rel="stylesheet" href="{{ asset('dist/css/adminlte.css') }}">
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
@@ -157,56 +157,56 @@
 <!-- ./wrapper -->
 
 <!-- jQuery -->
-{{--@vite('public/plugins/jquery/jquery.min.js')--}}
+{{--asset('plugins/jquery/jquery.min.js')--}}
 <!-- jQuery -->
 <script src={{asset('plugins/jquery/jquery.min.js')}}></script>
 <!-- Bootstrap 4 -->
 {
 <!-- jQuery UI 1.11.4 -->
-@vite('public/plugins/jquery-ui/jquery-ui.min.js')
+<script src="{{ asset('plugins/jquery-ui/jquery-ui.min.js') }}"></script>
 <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
 <script>
     $.widget.bridge('uibutton', $.ui.button)
 </script>
 <!-- Bootstrap 4 -->
-@vite('public/plugins/bootstrap/js/bootstrap.bundle.min.js')
+<script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 
-@vite('public/plugins/datatables/jquery.dataTables.min.js')
-@vite('public/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js')
-@vite('public/plugins/datatables-responsive/js/dataTables.responsive.min.js')
-@vite('public/plugins/datatables-responsive/js/responsive.bootstrap4.min.js')
-@vite('public/plugins/datatables-buttons/js/dataTables.buttons.min.js')
-@vite('public/plugins/datatables-buttons/js/buttons.bootstrap4.min.js')
-@vite('public/plugins/datatables-buttons/js/buttons.html5.min.js')
-@vite('public/plugins/datatables-buttons/js/buttons.print.min.js')
-@vite('public/plugins/datatables-buttons/js/buttons.colVis.min.js')
-@vite('public/plugins/bs-custom-file-input/bs-custom-file-input.min.js')
+<script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-buttons/js/buttons.bootstrap4.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
+<script src="{{ asset('plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
 <!-- ChartJS -->
-{{--@vite('public/plugins/chart.js/Chart.min.js')--}}
-<script src="../../plugins/chart.js/Chart.min.js"></script>
+<script src="{{ asset('plugins/chart.js/Chart.min.js') }}"></script>
+{{--<script src="../../plugins/chart.js/Chart.min.js"></script>--}}
 <!-- Sparkline -->
-@vite('public/plugins/sparklines/sparkline.js')
+<script src="{{ asset('plugins/sparklines/sparkline.js') }}"></script>
 <!-- JQVMap -->
-@vite('public/plugins/jqvmap/jquery.vmap.min.js')
+<script src="{{ asset('plugins/jqvmap/jquery.vmap.min.js') }}"></script>
 
-@vite('public/plugins/jqvmap/maps/jquery.vmap.usa.js')
+<script src="{{ asset('plugins/jqvmap/maps/jquery.vmap.usa.js') }}"></script>
 <!-- jQuery Knob Chart -->
-@vite('public/plugins/jquery-knob/jquery.knob.min.js')
+<script src="{{ asset('plugins/jquery-knob/jquery.knob.min.js') }}"></script>
 <!-- daterangepicker -->
 
-@vite('public/plugins/select2/js/select2.full.min.js')
-@vite('public/plugins/inputmask/jquery.inputmask.min.js')
-@vite('public/plugins/moment/moment.min.js')
+<script src="{{ asset('plugins/select2/js/select2.full.min.js') }}"></script>
+<script src="{{ asset('plugins/inputmask/jquery.inputmask.min.js') }}"></script>
+<script src="{{ asset('plugins/moment/moment.min.js') }}"></script>
 {{--<script src="{{ assert('plugins/moment/moment.min.js') }}"></script>--}}
-@vite('public/plugins/daterangepicker/daterangepicker.js')
+<script src="{{ asset('plugins/daterangepicker/daterangepicker.js') }}"></script>
 <!-- Tempusdominus Bootstrap 4 -->
-@vite('public/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js')
+<script src="{{ asset('plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js') }}"></script>
 <!-- Summernote -->
-@vite('public/plugins/summernote/summernote-bs4.min.js')
+<script src="{{ asset('plugins/summernote/summernote-bs4.min.js') }}"></script>
 <!-- overlayScrollbars -->
-@vite('public/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js')
+<script src="{{ asset('plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') }}"></script>
 <!-- AdminLTE App -->
-@vite('public/dist/js/adminlte.js')
+<script src="{{ asset('dist/js/adminlte.js') }}"></script>
 
 <script>
     $(function () {

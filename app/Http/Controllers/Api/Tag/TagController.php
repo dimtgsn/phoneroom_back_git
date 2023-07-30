@@ -24,21 +24,22 @@ class TagController extends Controller
             if (count($tag->products[$i]->variants)){
                 $category = $tag->products[$i]->category;
                 foreach ($tag->products[$i]->variants as $j => $variant){
+                    $variant_data = is_string($variant->variants_json) ? json_decode($variant->variants_json, true) : $variant->variants_json;
                     $product_or_variants[$j] = [
-                        'id' => json_decode($variant->variants_json, true)['id'],
-                        'product_name' => json_decode($variant->variants_json, true)['product_name'],
-                        'slug' => json_decode($variant->variants_json, true)['slug'],
-                        'image' => json_decode($variant->variants_json, true)['image'],
-                        'price' => json_decode($variant->variants_json, true)['price'],
+                        'id' => $variant_data['id'],
+                        'product_name' => $variant_data['product_name'],
+                        'slug' => $variant_data['slug'],
+                        'image' => $variant_data['image'],
+                        'price' => $variant_data['price'],
                         'category_name' => $category->name,
                         'category_slug' => $category->slug,
                         'category_id' => $category->id,
                         'quantity' => 1,
-                        'old_price' => json_decode($variant->variants_json, true)['old_price'],
-                        'rating' => (float)json_decode($variant->variants_json, true)['rating'],
-                        'units_in_stock' => (int)json_decode($variant->variants_json, true)['units_in_stock'],
-                        'published' => json_decode($variant->variants_json, true)['published'],
-                        'properties' => json_decode($tag->products[$i]->property->properties_json, true),
+                        'old_price' => $variant_data['old_price'],
+                        'rating' => (float)$variant_data['rating'],
+                        'units_in_stock' => (int)$variant_data['units_in_stock'],
+                        'published' => $variant_data['published'],
+                        'properties' => is_string($tag->products[$i]->property->properties_json) ? json_decode($tag->products[$i]->property->properties_json, true) : $tag->products[$i]->property->properties_json,
                     ];
                 }
             }

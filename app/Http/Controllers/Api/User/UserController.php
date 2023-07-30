@@ -96,8 +96,8 @@ class UserController extends Controller
     }
 
     public function getIpInfo() {
-        $dadata = DaDataAddress::iplocate(\Request::ip(), 2);
-        return $dadata['location']['data']['city'] ?? $dadata['location'];
-//        return 'Саратов';
+//        $dadata = DaDataAddress::iplocate(\Request::ip(), 2);
+//        return $dadata['location']['data']['city'] ?? $dadata['location'];
+        return '';
     }
 }

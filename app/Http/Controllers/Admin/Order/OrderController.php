@@ -48,16 +48,17 @@ class OrderController  extends Controller
             }
             else{
                 foreach (Variant::all() as $variants){
-                    if ((int)json_decode($variants->variants_json, true)['id'] === $op->product_id){
+                    $variant = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+                    if ((int)$variant['id'] === $op->product_id){
                         if (isset($products[$op->order_id])){
                             $products[$op->order_id][] = [
-                                json_decode($variants->variants_json, true),
+                                $variant,
                                 $op->quantity,
                                 $op->price,
                             ];
                         } else{
                             $products[$op->order_id] = [[
-                                json_decode($variants->variants_json, true),
+                                $variant,
                                 $op->quantity,
                                 $op->price,
                             ]];

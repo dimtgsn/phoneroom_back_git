@@ -28,11 +28,19 @@ class CompareController extends Controller
                     $products += $product_ ;
                 }
                 else{
-                    $product_variant = json_decode(\DB::select("
+                    $product_variant = \DB::select("
                         select variants_json->>0 as data , product_id
                         from variants
                         where (variants_json->>0)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
-                    )[0]->data, true);
+                    );
+                    if (!$product_variant){
+                        $product_variant = \DB::select("
+                            select variants_json as data , product_id
+                            from variants
+                            where (variants_json)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
+                        );
+                    }
+                    $product_variant = is_string($product_variant[0]->data) ? json_decode($product_variant[0]->data, true) : $product_variant[0]->data;
                     $category = Category::select('id')->where('name', $product_variant['category'])->first();
                     $product_variant['category_id'] = $category->id;
                     $product_variant['price'] = (int)$product_variant['price'];
@@ -66,13 +74,28 @@ class CompareController extends Controller
                         select variants_json->>0 as data , product_id
                         from variants
                         where (variants_json->>0)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
-                    )[0]->product_id;
-                    $product_properties = json_decode(Product::find($product_id)->property->properties_json, true);
-                    $product_variant = json_decode(\DB::select("
+                    );
+                    if (!$product_id){
+                        $product_id = \DB::select("
+                            select variants_json as data , product_id
+                            from variants
+                            where (variants_json)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
+                        );
+                    }
+                    $product_properties = json_decode(Product::find($product_id[0]->product_id)->property->properties_json, true);
+                    $product_variant = \DB::select("
                         select variants_json->>0 as data , product_id
                         from variants
                         where (variants_json->>0)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
-                    )[0]->data, true);
+                    );
+                    if (!$product_variant){
+                        $product_variant = \DB::select("
+                            select variants_json as data , product_id
+                            from variants
+                            where (variants_json)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
+                        );
+                    }
+                    $product_variant = is_string($product_variant[0]->data) ? json_decode($product_variant[0]->data, true) : $product_variant[0]->data;
                     $product_variant['category_id'] = $category->id;
                     $product_variant['price'] = (int)$product_variant['price'];
                     $product_variant['old_price'] = (int)$product_variant['old_price'];
@@ -117,11 +140,18 @@ class CompareController extends Controller
             }
             else{
                 $variant = DB::select("
-                        select variants_json->>0 as data
-                        from variants
-                        where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
+                    select variants_json->>0 as data
+                    from variants
+                    where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
                 );
-                $products[] = json_decode($variant[0]->data, true);
+                if (!$variant){
+                    $variant = \DB::select("
+                        select variants_json as data
+                        from variants
+                        where (variants_json)::jsonb  @> '{\"id\": \"$product\"}'"
+                    );
+                }
+                $products[] = is_string($variant[0]->data) ? json_decode($variant[0]->data, true) : $variant[0]->data;
             }
         }
         if (count($products)){

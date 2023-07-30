@@ -77,8 +77,8 @@ class Service
             }
             else{
                 foreach (Variant::all() as $variants){
-                    if (json_decode($variants->variants_json, true)['id'] === $product_id){
-                        $variant = json_decode($variants->variants_json, true);
+                    $variant = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+                    if ($variant['id'] === $product_id){
                         $variant['rating'] = $mean_rating;
                         $variants->update([
                             'variants_json' => json_encode($variant, JSON_UNESCAPED_UNICODE)

@@ -63,8 +63,8 @@ class ProductController extends Controller
         $comments = [];
         if (isset($product->variants)){
             foreach ($product->variants as $variants){
-                if (json_decode($variants->variants_json, true)['slug'] === $variant_slug){
-                    $variant = json_decode($variants->variants_json, true);
+                $variant = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+                if ($variant['slug'] === $variant_slug){
                     $comments = Comment::where('product_id', $variant['id'])->get();
                 }
             }
@@ -86,9 +86,9 @@ class ProductController extends Controller
         $variant = [];
         if (isset($product->variants)){
             foreach ($product->variants as $variants){
-
-                if (json_decode($variants->variants_json, true)['slug'] === $variant_slug){
-                    $variant = json_decode($variants->variants_json, true);
+                $variant_data = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+                if ($variant_data['slug'] === $variant_slug){
+                    $variant = $variant_data;
                 }
             }
         }
@@ -168,7 +168,8 @@ class ProductController extends Controller
     public function variant_destroy(Product $product, $variant_slug){
 
         foreach ($product->variants as $variants){
-            if (json_decode($variants->variants_json, true)['slug'] === $variant_slug){
+            $variant_data = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+            if ($variant_data['slug'] === $variant_slug){
 
                 if ($variants->my_warehouse_id){
                     $myWarehouse = MyWarehouse::select('token')->first();
@@ -185,26 +186,28 @@ class ProductController extends Controller
                         ->delete('https://online.moysklad.ru/api/remap/1.2/entity/variant/'.$variants->my_warehouse_id);
                 }
 
-                if(json_decode($variants->variants_json, true)['image']){
+                if($variant_data['image']){
                     $flag = false;
                     foreach ($product->variants as $v){
-                        if(json_decode($variants->variants_json, true)['id'] !== json_decode($v->variants_json, true)['id'] &&
-                            json_decode($variants->variants_json, true)['image'] === json_decode($v->variants_json, true)['image']){
+                        $v_data = is_string($v->variants_json) ? json_decode($v->variants_json, true) : $v->variants_json;
+                        if($variant_data['id'] !== $v_data['id'] &&
+                            $variant_data['image'] === $v_data['image']){
                             $flag = true;
                             break;
                         }
                     }
                     if (!$flag){
-                        \Storage::disk('public')->delete(substr(json_decode($variants->variants_json, true)['image'], 8));
+                        \Storage::disk('public')->delete(substr($variant_data['image'], 8));
                     }
                 }
-                $image_paths = Image::where('product_id', $product->id)->where('variant_id', json_decode($variants->variants_json, true)['id']);
+                $image_paths = Image::where('product_id', $product->id)->where('variant_id', $variant_data['id']);
                 if ($image_paths){
                     $flag = false;
                     foreach ($image_paths as $image_path) {
                         foreach ($product->variants as $v){
-                            if(json_decode($variants->variants_json, true)['id'] !== json_decode($v->variants_json, true)['id']){
-                                $images = Image::where('product_id', $product->id)->where('variant_id', json_decode($v->variants_json, true)['id']);
+                            $v_data = is_string($v->variants_json) ? json_decode($v->variants_json, true) : $v->variants_json;
+                            if($variant_data['id'] !== $v_data['id']){
+                                $images = Image::where('product_id', $product->id)->where('variant_id', $v_data['id']);
                                 foreach ($images as $image) {
                                     if($image_path->path === $image->path){
                                         $flag = true;
@@ -233,11 +236,11 @@ class ProductController extends Controller
                     $product->delete();
                 }
                 else{
-                    $options_json = json_decode($product->option->options_json, true);
+                    $options_json = is_string($product->option->options_json) ? json_decode($product->option->options_json, true) : $product->option->options_json;
                     for ($i=0;$i<count($options_json);$i++){
                         for ($j=0;$j<count($options_json[$i]['values']);$j++){
                             if(isset($options_json[$i]['values'][$j]) &&
-                                $options_json[$i]['values'][$j] === json_decode($variants->variants_json, true)['name']){
+                                $options_json[$i]['values'][$j] === $variant_data['name']){
                                 unset($options_json[$i]['values'][$j]);
                             }
                         }

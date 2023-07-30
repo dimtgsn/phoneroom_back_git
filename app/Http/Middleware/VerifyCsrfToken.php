@@ -17,9 +17,9 @@ class VerifyCsrfToken extends Middleware
         'my-warehouse/webhooks',
         'users/register',
         'users/logout',
-        'api/v1/baskets/create',
-        'api/v1/favorites/create',
-        'api/v1/compares/create',
+        'api/v1/baskets/*',
+        'api/v1/favorites/*',
+        'api/v1/compares/*',
         'api/v1/orders/create',
         'api/v1/comments/*',
     ];

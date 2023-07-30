@@ -43,15 +43,15 @@ class OrderController  extends Controller
     }
 
     public function zip_check($zip){
-        $token = env('BOXBERRY_TOKEN', 'c52a8b8d9b704226ececde2a40b50dfa');
-        $url='https://api.boxberry.ru/json.php?token='.$token.'&method=ZipCheck&Zip='.$zip;
-        $handle = fopen($url, "rb");
-        $contents = stream_get_contents($handle);
-        fclose($handle);
-        $res = json_decode($contents,true);
-        if(isset($res['err'])){
-            return false;
-        }
+//        $token = env('BOXBERRY_TOKEN', 'c52a8b8d9b704226ececde2a40b50dfa');
+//        $url='https://api.boxberry.ru/json.php?token='.$token.'&method=ZipCheck&Zip='.$zip;
+//        $handle = fopen($url, "rb");
+//        $contents = stream_get_contents($handle);
+//        fclose($handle);
+//        $res = json_decode($contents,true);
+//        if(isset($res['err'])){
+//            return false;
+//        }
         return true;
     }
 

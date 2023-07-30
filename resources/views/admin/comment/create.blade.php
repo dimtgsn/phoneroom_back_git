@@ -5,7 +5,7 @@
     <section class="h-100">
         <div class="container-fluid h-100">
             <div class="row justify-content-md-left w-100 h-100">
-                <div class="card-wrapper col-8">
+                <div class="card-wrapper col-12 col-lg-10">
                     <div>
                         <div class="card card-info">
                             <div class="card-header">
@@ -29,7 +29,7 @@
                                         @enderror
                                     </div>
                                     <div class="form-group mt-5">
-                                        <button type="submit" class="btn w-25 btn-info btn-block">
+                                        <button type="submit" class="btn w-50 btn-info btn-block">
                                             Создать
                                         </button>
                                     </div>

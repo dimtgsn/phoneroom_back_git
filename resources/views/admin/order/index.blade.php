@@ -4,7 +4,7 @@
     <div>
         <h2 class="mt-2 mb-3">Заказы:</h2>
         <hr>
-        <div class="row mt-5">
+        <div class="col-12 mt-5">
             <table id="example2" class="table table-dark table-responsive-lg table-hover dataTable dtr-inline" aria-describedby="example2_info">
                 <thead class="thead-dark">
                 <tr>

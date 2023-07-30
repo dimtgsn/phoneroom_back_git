@@ -1,7 +1,6 @@
 @extends('layouts.admin')
 
 @section('content')
-
     <div>
         <h2 class="pt-2 mb-3">Теги:</h2>
         <div class="row w-100 pt-2 justify-content-between">
@@ -18,19 +17,19 @@
                     <th scope="col">Название</th>
                     <th scope="col">Дата создания</th>
                     <th scope="col">Дата изменения</th>
-                    <th scope="col"></th>
+                    <th scope="col">Действия</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach($tags as $tag)
                     <tr>
-                        <th>{{ $tag->id }}</th>
-                        <th>{{ $tag->name }}</th>
-                        <th>{{ $tag->created_at }}</th>
-                        <th>
+                        <th scope="col">{{ $tag->id }}</th>
+                        <th scope="col">{{ $tag->name }}</th>
+                        <th scope="col">{{ $tag->created_at }}</th>
+                        <th scope="col">
                             {{ $tag->updated_at ?? 'Изменений нет' }}
                         </th>
-                        <th>
+                        <th scope="col">
                             <a href="{{ route('admin.tags.show', $tag->slug) }}"><i class="fa fa-solid fa-eye"></i></a>
                             <a class="pl-md-5 pr-md-5 pl-3 pr-3" href="{{ route('admin.tags.edit', $tag->slug) }}"><i class="fa fa-solid fa-pen"></i></a>
                             <form class="m-0 p-0 d-inline-block" action="{{ route('admin.tags.destroy', $tag->slug) }}" method="post">
@@ -48,6 +47,7 @@
                         <th rowspan="1" colspan="1">Название</th>
                         <th rowspan="1" colspan="1">Дата создания</th>
                         <th rowspan="1" colspan="1">Дата изменения</th>
+                        <th rowspan="1" colspan="1">Действия</th>
                     </tr>
                 </tfoot>
             </table>

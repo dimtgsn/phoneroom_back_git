@@ -35,14 +35,20 @@ class ProductController extends Controller
             ->first();
         if (empty($product) === true){
             $variant = DB::select("
-                        select variants_json->>0 as data , product_id
-                        from variants
-                        where (variants_json->>0)::jsonb  @> '{\"slug\": \"$slug\"}'"
+                select variants_json->>0 as data , product_id
+                from variants
+                where (variants_json->>0)::jsonb  @> '{\"slug\": \"$slug\"}'"
             );
+            if (!$variant){
+                $variant = \DB::select("
+                    select variants_json as data , product_id
+                    from variants
+                    where (variants_json)::jsonb  @> '{\"slug\": \"$slug\"}'"
+                );
+            }
             if (empty($variant) != true){
                 $productVariant = Product::find($variant[0]->product_id);
-                $variant = $variant[0]->data;
-                $variant = json_decode($variant, true);
+                $variant = is_string($variant[0]->data) ? json_decode($variant[0]->data, true) : $variant[0]->data;
                 $comments = Comment::where('product_id', $variant['id'])->where('type', 0)->get();
                 $variant['comments_count'] = $comments->count() ?? 0;
                 $variant['comments_count_5'] = $comments->where('rating', 5)->count() ?? 0;
@@ -53,8 +59,8 @@ class ProductController extends Controller
                 $variant['category_name'] = $productVariant->category['name'];
                 $variant['variants_published'] = [];
                 foreach ($productVariant->variants as $variants){
-                    $variant['variants_published'][json_decode($variants->variants_json, true)['name']]
-                        =json_decode($variants->variants_json, true)['published'];
+                    $variant_data = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
+                    $variant['variants_published'][$variant_data['name']] = $variant_data['published'];
                 }
 //                $variant['variants_published']['Graphite 512GB'] = false;
                 $variant['category_slug'] = $productVariant->category['slug'];
@@ -70,8 +76,8 @@ class ProductController extends Controller
                         $variant['images'][] = $img;
                     }
                 }
-                $variant['properties'] = json_decode($productVariant->property->properties_json);
-                $variant['option'] = json_decode($productVariant->option->options_json);
+                $variant['properties'] = is_string($productVariant->property->properties_json) ? json_decode($productVariant->property->properties_json, true) : $productVariant->property->properties_json;
+                $variant['option'] = is_string($productVariant->option->options_json) ? json_decode($productVariant->option->options_json, true) : $productVariant->option->options_json;
                 $variant['tags'] = [];
                 foreach ($productVariant->tags as $tag){
 
@@ -127,11 +133,18 @@ class ProductController extends Controller
             }
             else{
                 $variant = DB::select("
-                        select variants_json->>0 as data
-                        from variants
-                        where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
+                    select variants_json->>0 as data
+                    from variants
+                    where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
                 );
-                $products[] = json_decode($variant[0]->data, true);
+                if (!$variant){
+                    $variant = \DB::select("
+                        select variants_json as data
+                        from variants
+                        where (variants_json)::jsonb  @> '{\"id\": \"$product\"}'"
+                    );
+                }
+                $products[] = is_string($variant[0]->data) ? json_decode($variant[0]->data, true) : $variant[0]->data;
             }
         }
         if (count($products)){

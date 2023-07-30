@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Favorite\StoreRequest;
 use App\Http\Requests\Favorite\UpdateRequest;
 use App\Http\Resources\Product\MiniProductCollection;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Favorite\Service;
@@ -25,18 +26,28 @@ class FavoriteController extends Controller
                     $products += $product_ ;
                 }
                 else{
-                    $product_variant = json_decode(\DB::select("
+                    $product_variant = \DB::select("
                         select variants_json->>0 as data , product_id
                         from variants
                         where (variants_json->>0)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
-                    )[0]->data, true);
+                    );
+                    if (!$product_variant){
+                        $product_variant = \DB::select("
+                            select variants_json as data , product_id
+                            from variants
+                            where (variants_json)::jsonb  @> '{\"id\": \"$product->product_id\"}'"
+                        );
+                    }
+                    $product_variant = is_string($product_variant[0]->data) ? json_decode($product_variant[0]->data, true) : $product_variant[0]->data;
                     $product_variant['price'] = (int)$product_variant['price'];
                     $product_variant['old_price'] = (int)$product_variant['old_price'];
+                    $product_variant['category_id'] = (int)Category::where('name', $product_variant['category'])->first()['id'];
 
                     $products[] = $product_variant ;
                 }
             }
-            return $products;
+//            return $products;
+            return new MiniProductCollection($products);
         }
         else{
             $service->create($user);
@@ -74,11 +85,18 @@ class FavoriteController extends Controller
             }
             else{
                 $variant = DB::select("
-                        select variants_json->>0 as data
-                        from variants
-                        where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
+                    select variants_json->>0 as data
+                    from variants
+                    where (variants_json->>0)::jsonb  @> '{\"id\": \"$product\"}'"
                 );
-                $products[] = json_decode($variant[0]->data, true);
+                if (!$variant){
+                    $variant = \DB::select("
+                        select variants_json as data
+                        from variants
+                        where (variants_json)::jsonb  @> '{\"id\": \"$product\"}'"
+                    );
+                }
+                $products[] = is_string($variant[0]->data) ? json_decode($variant[0]->data, true) : $variant[0]->data;
             }
         }
         if (count($products)){

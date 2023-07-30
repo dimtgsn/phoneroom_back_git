@@ -9,8 +9,8 @@
 {{--            </div>--}}
 {{--        </div>--}}
         <hr>
-        <div>
-            <div class="card card-primary w-75">
+        <div class="col-12 col-lg-8">
+            <div class="card card-primary">
                 <div class="card-header text-lg">Подключение к аккаунту</div>
                 <div class="card-body">
                     @if(isset($error_msg))
