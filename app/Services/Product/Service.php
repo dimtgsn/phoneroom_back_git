@@ -613,8 +613,9 @@ class Service
                         }
                         else{
                             foreach ($product->variants as $var){
-                                $v = is_string($var->variants_json) ? json_decode($var->variants_json, true) : $var->variants_json;
-                                if ($v['name'] === $variant['name']){
+                                if (is_string($var->variants_json) ? json_decode($var->variants_json, true)['name'] === $variant['name']
+                                    : $var->variants_json['name'] === $variant['name']){
+                                    $v = is_string($var->variants_json) ? json_decode($var->variants_json, true) : $var->variants_json;
                                     $variant['image'] = $v['image'];
                                 }
                             }
@@ -1018,8 +1019,9 @@ class Service
         $var_img = null;
         $var_id = 0;
         foreach ($product->variants as $variants){
-            $var = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
-            if ($var['slug'] === $variant_slug){
+            if (is_string($variants->variants_json) ? json_decode($variants->variants_json, true)['slug'] === $variant_slug
+                : $variants->variants_json['slug'] === $variant_slug){
+                $var = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
                 $var_img = $var['image'];
                 $var_id = $var['id'];
             }
@@ -1036,9 +1038,9 @@ class Service
                 if ($var_img){
                     $flag = false;
                     foreach ($product->variants as $variants){
-                        $var = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
-                        if ($var['image'] === $var_img &&
-                            $var['id'] !== $var_id){
+                        if ((is_string($variants->variants_json) ? json_decode($variants->variants_json, true)['image'] === $var_img
+                                : $variants->variants_json['image'] === $var_img) && (is_string($variants->variants_json) ? json_decode($variants->variants_json, true)['id'] !== $var_id
+                            : $variants->variants_json['id'] !== $var_id)){
                             $flag = true;
                             break;
                         }
@@ -1110,8 +1112,9 @@ class Service
 
             if (isset($product->variants)){
                 foreach ($product->variants as $i => $product_variant){
-                    $variant_data = is_string($product_variant->variants_json) ? json_decode($product_variant->variants_json, true) : $product_variant->variants_json;
-                    if ($variant_data['slug'] === $variant_slug){
+                    if (is_string($product_variant->variants_json) ? json_decode($product_variant->variants_json, true)['slug'] === $variant_slug
+                        : $product_variant->variants_json['slug'] === $variant_slug){
+                        $variant_data = is_string($product_variant->variants_json) ? json_decode($product_variant->variants_json, true) : $product_variant->variants_json;
                         $variant = [
                             'name' => $variant_data['name'],
                             'product_name' => $data['name'] ?? $variant_data['product_name'],

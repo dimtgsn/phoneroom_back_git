@@ -6,7 +6,7 @@
         <hr>
         <div>
             <div class="card card-primary">
-                <div class="card-body d-flex justify-content-between">
+                <div class="card-body d-flex flex-column justify-content-between">
                     <div class="col-12">
                         <a href="#" disabled class="w-100 mt-3 active btn btn-outline-dark">Экспорт товаров</a>
                         <hr>

@@ -144,7 +144,11 @@ class ProductController extends Controller
                         where (variants_json)::jsonb  @> '{\"id\": \"$product\"}'"
                     );
                 }
-                $products[] = is_string($variant[0]->data) ? json_decode($variant[0]->data, true) : $variant[0]->data;
+                $product_data = is_string($variant[0]->data) ? json_decode($variant[0]->data, true) : $variant[0]->data;
+                $product_data['price'] = (int)$product_data['price'];
+                $product_data['old_price'] = (int)$product_data['old_price'];
+                $product_data['category_id'] = (int)Category::where('name', $product_data['category'])->first()['id'];
+                $products[] = $product_data;
             }
         }
         if (count($products)){

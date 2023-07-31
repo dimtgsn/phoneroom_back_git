@@ -811,7 +811,6 @@ class Service
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_POSTFIELDS => $data,
             CURLOPT_HEADER => false,
-            CURLOPT_VERBOSE => true,
             CURLOPT_HTTPHEADER => array(
                 "Content-Type: application/json",
                 "Authorization: Bearer ".$myWarehouse->token,

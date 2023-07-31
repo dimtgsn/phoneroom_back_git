@@ -48,8 +48,9 @@ class OrderController  extends Controller
             }
             else{
                 foreach (Variant::all() as $variants){
-                    $variant = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
-                    if ((int)$variant['id'] === $op->product_id){
+                    if (is_string($variants->variants_json) ? (int)json_decode($variants->variants_json, true)['id'] === $op->product_id
+                        : $variants->variants_json['id'] === $op->product_id){
+                        $variant = is_string($variants->variants_json) ? json_decode($variants->variants_json, true) : $variants->variants_json;
                         if (isset($products[$op->order_id])){
                             $products[$op->order_id][] = [
                                 $variant,
