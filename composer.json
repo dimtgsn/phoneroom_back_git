@@ -24,7 +24,9 @@
         "livewire/livewire": "^2.11",
         "meilisearch/meilisearch-php": "^1.0",
         "movemoveapp/laravel-dadata": "^1.0",
-        "stevebauman/location": "^6.6"
+        "stevebauman/location": "^6.6",
+        "ext-simplexml": "*",
+        "ext-zip": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.7",

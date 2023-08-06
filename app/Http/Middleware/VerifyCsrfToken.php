@@ -22,5 +22,6 @@ class VerifyCsrfToken extends Middleware
         'api/v1/compares/*',
         'api/v1/orders/create',
         'api/v1/comments/*',
+        '1c-retail-integration/1c_exchange',
     ];
 }

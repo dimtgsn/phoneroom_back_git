@@ -306,3 +306,8 @@ Route::get('/create_webhooks', function (){
 Route::group(['namespace' => '\App\Http\Controllers\Admin\MyWarehouse', 'prefix' => 'my-warehouse'], function (){
     Route::post('/webhooks', 'MyWarehouseController@webhooks')->name('my-warehouse.webhooks');
 });
+
+Route::group(['namespace' => '\App\Http\Controllers\Admin\Retail1C', 'prefix' => '1c-retail-integration'], function (){
+    Route::get('/1c_exchange', 'Retail1CController@index');
+    Route::post('/1c_exchange', 'Retail1CController@upload_files');
+});
